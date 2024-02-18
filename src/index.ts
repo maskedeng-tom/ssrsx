@@ -10,14 +10,47 @@ import { getDir } from './lib/getDir';
 import { readdirSyncRecursively } from './lib/readdirSyncRecursively';
 
 ////////////////////////////////////////////////////////////////////////////////
+/*
+type LazyFC = (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => void | Promise<void>;
 
-interface SsrsxOptions {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const fcCache = new Map<() => Promise<any>, LazyFC>();
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const lazy = (o: () => Promise<any>): LazyFC => {
+  //
+  return (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => {
+    //
+    let fc = fcCache.get(o);
+    if(fc === undefined){
+      //
+      fc = () => {};
+      fcCache.set(o, fc);
+      //
+      void (async() => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        fc = ((await o())['default'] as LazyFC);
+        fcCache.set(o, fc);
+      })();
+      //
+    }
+    //
+    return fc(ctx, next, userContext);
+    //
+  };
+};
+*/
+////////////////////////////////////////////////////////////////////////////////
+
+interface SsrsxOptions<T = unknown> {
   requireJsPaths?: { [key: string]: string };
   sourceMap?: boolean;
   workRoot?: string;
   serverRoot?: string;
   clientRoot?: string;
   maxAge?: number;
+  context?: (ctx: Koa.Context) => T;
+  filter?: (ctx: Koa.Context) => boolean;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -112,6 +145,8 @@ const ssrsx = (option?: SsrsxOptions) => {
 
   //////////////////////////////////////////////////////////////////////////////
 
+  const loadCache: {[path:string]: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => void | Promise<void>} = {};
+
   const handler = async (ctx: Koa.Context, next: Koa.Next) => {
     //
     await compile();
@@ -170,9 +205,22 @@ const ssrsx = (option?: SsrsxOptions) => {
       }
     }
 
+    let target = loadCache[targetPath];
+    if(loadCache[targetPath]){
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      target = (await import(targetPath))['default'] as (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => void | Promise<void>;
+      loadCache[targetPath] = target;
+    }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const target = (await import(targetPath))['default'] as (ctx: Koa.Context, next: Koa.Next) => void | Promise<void>;
+    //const target = (await import(targetPath))['default'] as (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => void | Promise<void>;
     if(!target){
+      await next();
+      return;
+    }
+
+    // filter
+    const filter = option?.filter? option.filter(ctx): undefined;
+    if(filter === false){
       await next();
       return;
     }
@@ -180,9 +228,12 @@ const ssrsx = (option?: SsrsxOptions) => {
     // initialize parse
     initializeParse();
     try{
-      await target(ctx, next);
+      // userContext
+      const userContext = option?.context? option.context(ctx): undefined;
+      // run target
+      await target(ctx, next, userContext);
     }catch(e){
-      console.error(e);
+      log('parse error:', targetPath.slice(serverRoot.length + 1), e);
       await next();
       return;
     }
