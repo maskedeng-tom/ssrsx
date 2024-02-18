@@ -1,5 +1,5 @@
-import { getRequireJs, getLoadEventsJs } from './src/index';
-import { initializeParse, events } from './src/index';
+import { getRequireJs, getLoadEventsJs } from './src';
+import { initializeParse, events } from './src';
 //
 export { getRequireJs, getLoadEventsJs };
 export { initializeParse, events };
