@@ -40,10 +40,11 @@ const ssrsx = (option?: SsrsxOptions) => {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  const requireJsOptions = Object.assign({
+  const requireJsOptions = {
     baseUrl,
     urlArgs: 't=' + bust,
-  }, option?.requireJsPaths);
+    paths: option?.requireJsPaths,
+  };
 
   //////////////////////////////////////////////////////////////////////////////
 
