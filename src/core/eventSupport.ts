@@ -16,7 +16,7 @@ let uidPrefix: string = '';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const initializeParse = (prefix: string = 'u') => {
+const initializeParse = (prefix: string = 'uid') => {
   uidSource = 0;
   events = [];
   uidPrefix = prefix;

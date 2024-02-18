@@ -1,5 +1,6 @@
 import debug from 'debug';
 const log = debug('ssrsx');
+const logError = debug('ssrsx:error');
 import fs from 'fs';
 import path from 'path';
 import Koa from 'koa';
@@ -99,7 +100,7 @@ const ssrsx = (option?: SsrsxOptions) => {
         childProcess.exec(cmd, (err, stdout, stderr) => {
           if (err) {
             ++errorCount;
-            log(`compile error: ${file}\n${stderr}`);
+            logError(`compile error: ${file}\n${stderr}`);
           }else{
             log(`compile ok: ${file}`);
           }
@@ -140,12 +141,14 @@ const ssrsx = (option?: SsrsxOptions) => {
       ctx.set('ETag', targetUrl);
       ctx.set('Cache-Control', `max-age=${option?.maxAge ?? 60 * 60 * 24}`);
       if(ctx.fresh){
+        log('CACHE', targetUrl);
         ctx.status = 304;
         return;
       }
 
       // require.js
       if(targetUrl === requireJs){
+        log(ctx.method, targetUrl);
         ctx.body = getRequireJs() + getLoadEventsJs();
         return;
       }
@@ -196,13 +199,13 @@ const ssrsx = (option?: SsrsxOptions) => {
       return;
     }
 
-    // initialize parse
-    initializeParse();
     try{
+      // initialize parse
+      initializeParse();
       // run target
       await target(ctx, next, userContext);
     }catch(e){
-      log('parse error:', targetPath.slice(serverRoot.length + 1), e);
+      logError('parse error:', targetPath.slice(serverRoot.length + 1), e);
       await next();
       return;
     }
