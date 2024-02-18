@@ -1,5 +1,5 @@
 import { FunctionComponent, Props, VirtualChildren } from '../src/types/types';
-import { createUid, events } from '../src/index';
+import { createUid, events } from '../src/eventSupport';
 
 ////////////////////////////////////////////////////////////////////////////////
 

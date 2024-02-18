@@ -1,5 +1,4 @@
-import { getRequireJs, getLoadEventsJs } from './src';
-import { initializeParse, events } from './src';
+import ssrsx, { SsrsxOptions } from './src/';
 //
-export { getRequireJs, getLoadEventsJs };
-export { initializeParse, events };
+export { ssrsx, SsrsxOptions };
+export default ssrsx;
