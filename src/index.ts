@@ -110,8 +110,6 @@ const ssrsx = (option?: SsrsxOptions) => {
     //
     await compile();
 
-    log('input', ctx.url);
-
     // cut hash and search
     let url = ctx.url;
     const searchPos = url.lastIndexOf('?');
@@ -123,22 +121,9 @@ const ssrsx = (option?: SsrsxOptions) => {
       url = url.slice(0, hashPos);
     }
 
-    log('cut input', url);
-
     // ssrsx
     if(url.indexOf(baseUrl) === 0){
-      //
       const targetUrl = url.replace(baseUrl, '');
-      /*
-      const searchPos = targetUrl.lastIndexOf('?');
-      if(searchPos !== -1){
-        targetUrl = targetUrl.slice(0, searchPos);
-      }
-      const hashPos = targetUrl.lastIndexOf('#');
-      if(hashPos !== -1){
-        targetUrl = targetUrl.slice(0, hashPos);
-      }
-      */
 
       // require.js
       if(targetUrl === requireJs){
@@ -148,7 +133,7 @@ const ssrsx = (option?: SsrsxOptions) => {
 
       // load compiled js
       const targetPath = path.join(workRoot, targetUrl);
-      log('output', targetUrl);
+      log(ctx.method, targetUrl);
       const data = fs.readFileSync(targetPath).toString();
       ctx.body = data;
       return;
@@ -159,8 +144,6 @@ const ssrsx = (option?: SsrsxOptions) => {
     if(url.slice(-1) === '/' || (fs.existsSync(localPath) && fs.lstatSync(localPath).isDirectory())){
       fileName = path.join(url, 'index');
     }
-
-    log('test', fileName);
 
     // output filepath
     let targetPath = path.join(serverRoot, `${fileName}.tsx`);
@@ -197,7 +180,7 @@ const ssrsx = (option?: SsrsxOptions) => {
 </body>`);
 
     // result
-    log('output', targetPath.slice(serverRoot.length + 1));
+    log(ctx.method, targetPath.slice(serverRoot.length + 1));
     ctx.body = '<!DOCTYPE html>' + output;
 
   };
