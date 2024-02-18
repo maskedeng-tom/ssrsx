@@ -1,11 +1,9 @@
 import ssrsx, { SsrsxOptions } from './src/';
-//
-export { ssrsx, SsrsxOptions };
-export default ssrsx;
-
-import { initializeParse, events } from './src/eventSupport';
-import { getRequireJs, getLoadEventsJs } from './src/getJs';
+import { initializeParse, events } from './src/core/eventSupport';
+import { getRequireJs, getLoadEventsJs } from './src/core/getJs';
 import { getDir } from './src/lib/getDir';
 import { readdirSyncRecursively } from './src/lib/readdirSyncRecursively';
-
+//
+export default ssrsx;
+export { ssrsx, SsrsxOptions };
 export { initializeParse, events, getRequireJs, getLoadEventsJs, getDir, readdirSyncRecursively };

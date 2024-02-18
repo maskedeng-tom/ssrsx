@@ -4,10 +4,12 @@ import fs from 'fs';
 import path from 'path';
 import Koa from 'koa';
 import childProcess from 'child_process';
-import { initializeParse, events } from './eventSupport';
-import { getRequireJs, getLoadEventsJs } from './getJs';
+import { initializeParse, events } from './core/eventSupport';
+import { getRequireJs, getLoadEventsJs } from './core/getJs';
 import { getDir } from './lib/getDir';
 import { readdirSyncRecursively } from './lib/readdirSyncRecursively';
+
+////////////////////////////////////////////////////////////////////////////////
 
 interface SsrsxOptions {
   requireJsPaths?: { [key: string]: string };
@@ -15,7 +17,10 @@ interface SsrsxOptions {
   workRoot?: string;
   serverRoot?: string;
   clientRoot?: string;
+  maxAge?: number;
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 const ssrsx = (option?: SsrsxOptions) => {
 
@@ -128,6 +133,7 @@ const ssrsx = (option?: SsrsxOptions) => {
       // cache
       ctx.status = 200;
       ctx.set('ETag', targetUrl);
+      ctx.set('Cache-Control', `max-age=${option?.maxAge ?? 60 * 60 * 24}`);
       if(ctx.fresh){
         ctx.status = 304;
         return;
