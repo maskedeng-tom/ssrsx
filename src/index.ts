@@ -18,24 +18,29 @@ interface SsrsxOptions {
 }
 
 const ssrsx = (option?: SsrsxOptions) => {
-  //
+
   const bust = (new Date()).getTime();
-  //
   const baseUrl = '/ssrsx/';
   const requireJs = `event-loader-${bust}.js`;
-  //
+
+  //////////////////////////////////////////////////////////////////////////////
+
   const workRoot = getDir(option?.workRoot, './ssrsx');
   const serverRoot = getDir(option?.serverRoot, './src/server');
   const clientRoot = getDir(option?.clientRoot, './src/client');
 
-  log('workRoot', workRoot);
-  log('serverRoot', serverRoot);
-  log('clientRoot', clientRoot);
+  log('workRoot:', workRoot);
+  log('serverRoot:', serverRoot);
+  log('clientRoot:', clientRoot);
+
+  //////////////////////////////////////////////////////////////////////////////
 
   const requireJsOptions = Object.assign({
     baseUrl,
     urlArgs: 't=' + bust,
   }, option?.requireJsPaths);
+
+  //////////////////////////////////////////////////////////////////////////////
 
   const tscOptions = {
     target: 'ES6',
@@ -48,6 +53,8 @@ const ssrsx = (option?: SsrsxOptions) => {
     strict: true,
     skipLibCheck: true
   };
+
+  //////////////////////////////////////////////////////////////////////////////
 
   let compiled = false;
   const compile = async () => {
@@ -85,6 +92,8 @@ const ssrsx = (option?: SsrsxOptions) => {
           if (err) {
             ++errorCount;
             log(`compile error: ${file}\n${stderr}`);
+          }else{
+            log(`compile ok: ${file}`);
           }
           if(i === files.length - 1){
             resolve(errorCount === 0);
@@ -95,17 +104,37 @@ const ssrsx = (option?: SsrsxOptions) => {
     });
   };
 
+  //////////////////////////////////////////////////////////////////////////////
+
   const handler = async (ctx: Koa.Context, next: Koa.Next) => {
     //
     await compile();
-    //
-    if(ctx.url.indexOf(baseUrl) === 0){
-    //
-      let targetUrl = ctx.url.replace(baseUrl, '');
-      const pos = targetUrl.lastIndexOf('?');
-      if(pos !== -1){
-        targetUrl = targetUrl.substr(0, pos);
+
+    // cut hash and search
+    let url = ctx.url;
+    const searchPos = url.lastIndexOf('?');
+    if(searchPos !== -1){
+      url = url.slice(0, searchPos);
+    }
+    const hashPos = url.lastIndexOf('#');
+    if(hashPos !== -1){
+      url = url.slice(0, hashPos);
+    }
+
+    // ssrsx
+    if(url.indexOf(baseUrl) === 0){
+      //
+      const targetUrl = url.replace(baseUrl, '');
+      /*
+      const searchPos = targetUrl.lastIndexOf('?');
+      if(searchPos !== -1){
+        targetUrl = targetUrl.slice(0, searchPos);
       }
+      const hashPos = targetUrl.lastIndexOf('#');
+      if(hashPos !== -1){
+        targetUrl = targetUrl.slice(0, hashPos);
+      }
+      */
 
       // require.js
       if(targetUrl === requireJs){
@@ -115,17 +144,16 @@ const ssrsx = (option?: SsrsxOptions) => {
 
       // load compiled js
       const targetPath = path.join(workRoot, targetUrl);
-      console.log('targetUrl', targetPath);
+      log('output', targetUrl);
       const data = fs.readFileSync(targetPath).toString();
       ctx.body = data;
       return;
     }
 
-    // output filename
-    let fileName = (!ctx.url || ctx.url === '/')?'/index':ctx.url;
-    const localPath = path.join(serverRoot, ctx.url);
-    if(ctx.url.slice(-1) === '/' || (fs.existsSync(localPath) && fs.lstatSync(localPath).isDirectory())){
-      fileName = path.join(ctx.url, 'index');
+    let fileName = (!url || url === '/')?'/index':url;
+    const localPath = path.join(serverRoot, url);
+    if(url.slice(-1) === '/' || (fs.existsSync(localPath) && fs.lstatSync(localPath).isDirectory())){
+      fileName = path.join(url, 'index');
     }
 
     // output filepath
@@ -163,6 +191,7 @@ const ssrsx = (option?: SsrsxOptions) => {
 </body>`);
 
     // result
+    log('output', targetPath.slice(serverRoot.length + 1));
     ctx.body = '<!DOCTYPE html>' + output;
 
   };
