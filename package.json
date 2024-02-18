@@ -14,19 +14,6 @@
   ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": {
-        "default": "./dist/index.d.ts"
-      }
-    },
-    "./jsx-runtime": {
-      "types": {
-        "default": "./index.d.ts"
-      }
-    },
-    "./package.json": "./package.json"
-  },
   "author": "Maskedeng Tom",
   "license": "MIT",
   "repository": {
