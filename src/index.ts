@@ -26,6 +26,10 @@ const ssrsx = (option?: SsrsxOptions) => {
   const serverRoot = getDir(option?.workRoot, './src/server');
   const clientRoot = getDir(option?.workRoot, './src/client');
 
+  console.log('workRoot', workRoot);
+  console.log('serverRoot', serverRoot);
+  console.log('clientRoot', clientRoot);
+
   const requireJsOptions = Object.assign({
     baseUrl,
     urlArgs: 't=' + bust,
