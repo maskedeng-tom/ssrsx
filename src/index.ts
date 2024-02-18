@@ -19,7 +19,7 @@ interface SsrsxOptions<T = unknown> {
   clientRoot?: string;
   maxAge?: number;
   context?: (ctx: Koa.Context) => T;
-  filter?: (ctx: Koa.Context) => boolean;
+  filter?: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => boolean;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -158,6 +158,7 @@ const ssrsx = (option?: SsrsxOptions) => {
       return;
     }
 
+    // page target
     let fileName = (!url || url === '/')?'/index':url;
     const localPath = path.join(serverRoot, url);
     if(url.slice(-1) === '/' || (fs.existsSync(localPath) && fs.lstatSync(localPath).isDirectory())){
@@ -174,6 +175,15 @@ const ssrsx = (option?: SsrsxOptions) => {
       }
     }
 
+    // userContext
+    const userContext = option?.context? option.context(ctx): undefined;
+
+    // filter
+    const filter = option?.filter? option.filter(ctx, next, userContext): undefined;
+    if(filter === false){
+      return;
+    }
+
     // load target
     let target = loadCache[targetPath];
     if(!loadCache[targetPath]){
@@ -186,18 +196,9 @@ const ssrsx = (option?: SsrsxOptions) => {
       return;
     }
 
-    // filter
-    const filter = option?.filter? option.filter(ctx): undefined;
-    if(filter === false){
-      await next();
-      return;
-    }
-
     // initialize parse
     initializeParse();
     try{
-      // userContext
-      const userContext = option?.context? option.context(ctx): undefined;
       // run target
       await target(ctx, next, userContext);
     }catch(e){
