@@ -1,3 +1,5 @@
+import debug from 'debug';
+const log = debug('ssrsx');
 import fs from 'fs';
 import path from 'path';
 import Koa from 'koa';
@@ -23,12 +25,12 @@ const ssrsx = (option?: SsrsxOptions) => {
   const requireJs = `event-loader-${bust}.js`;
   //
   const workRoot = getDir(option?.workRoot, './ssrsx');
-  const serverRoot = getDir(option?.workRoot, './src/server');
-  const clientRoot = getDir(option?.workRoot, './src/client');
+  const serverRoot = getDir(option?.serverRoot, './src/server');
+  const clientRoot = getDir(option?.clientRoot, './src/client');
 
-  console.log('workRoot', workRoot);
-  console.log('serverRoot', serverRoot);
-  console.log('clientRoot', clientRoot);
+  log('workRoot', workRoot);
+  log('serverRoot', serverRoot);
+  log('clientRoot', clientRoot);
 
   const requireJsOptions = Object.assign({
     baseUrl,
@@ -82,7 +84,7 @@ const ssrsx = (option?: SsrsxOptions) => {
         childProcess.exec(cmd, (err, stdout, stderr) => {
           if (err) {
             ++errorCount;
-            console.log(`compile error: ${file}\n${stderr}`);
+            log(`compile error: ${file}\n${stderr}`);
           }
           if(i === files.length - 1){
             resolve(errorCount === 0);
