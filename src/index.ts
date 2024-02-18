@@ -110,6 +110,8 @@ const ssrsx = (option?: SsrsxOptions) => {
     //
     await compile();
 
+    log('input', ctx.url);
+
     // cut hash and search
     let url = ctx.url;
     const searchPos = url.lastIndexOf('?');
@@ -120,6 +122,8 @@ const ssrsx = (option?: SsrsxOptions) => {
     if(hashPos !== -1){
       url = url.slice(0, hashPos);
     }
+
+    log('cut input', url);
 
     // ssrsx
     if(url.indexOf(baseUrl) === 0){
@@ -155,6 +159,8 @@ const ssrsx = (option?: SsrsxOptions) => {
     if(url.slice(-1) === '/' || (fs.existsSync(localPath) && fs.lstatSync(localPath).isDirectory())){
       fileName = path.join(url, 'index');
     }
+
+    log('test', fileName);
 
     // output filepath
     let targetPath = path.join(serverRoot, `${fileName}.tsx`);
