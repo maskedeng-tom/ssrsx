@@ -1,6 +1,6 @@
 {
   "name": "@maskedeng-tom/ssrsx",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "description": "server side renderer with tsx(jsx)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
