@@ -19,6 +19,7 @@ const parseAttributes = (props: Props | null): string => {
   //
   const uid = createUid();
   //
+  let needUid = false;
   const result: string[] = [];
   for(const key in props){
     //
@@ -29,6 +30,7 @@ const parseAttributes = (props: Props | null): string => {
       const [module, f] = String(props[key]).split('.');
       //
       events.push({target, event, module, f: f ?? key});
+      needUid = true;
       //
       continue;
     }
@@ -38,7 +40,10 @@ const parseAttributes = (props: Props | null): string => {
   if(result.length === 0){
     return '';
   }
-  return ` ${uid} ${result.join(' ')}`;
+  if(needUid){
+    result.push(uid);
+  }
+  return ` ${result.join(' ')}`;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
