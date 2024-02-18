@@ -3,7 +3,7 @@
   "version": "0.1.8",
   "description": "server side renderer with tsx(jsx)",
   "main": "dist/index.js",
-  "types": "ssrsx.d.ts",
+  "types": "index.d.ts",
   "author": "Maskedeng Tom",
   "license": "MIT",
   "repository": {

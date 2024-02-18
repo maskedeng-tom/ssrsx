@@ -111,7 +111,7 @@
   },
   "files": [
     "index.ts",
-    "ssrsx.d.ts"
+    "index.d.ts"
   ],
   "include": [
     "jsx/**/*",
