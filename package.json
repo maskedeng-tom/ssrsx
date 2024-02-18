@@ -1,6 +1,6 @@
 {
   "name": "@maskedeng-tom/ssrsx",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "description": "server side renderer with tsx(jsx)",
   "keywords": [
     "html",
@@ -16,18 +16,18 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-        "types": {
-            "default": "./dist/index.d.ts"
-        }
+      "types": {
+        "default": "./dist/index.d.ts"
+      }
     },
     "./jsx-runtime": {
-        "types": {
-            "default": "./index.d.ts"
-        }
+      "types": {
+        "default": "./index.d.ts"
+      }
     },
     "./package.json": "./package.json"
-},
-"author": "Maskedeng Tom",
+  },
+  "author": "Maskedeng Tom",
   "license": "MIT",
   "repository": {
     "type": "git",
