@@ -9,7 +9,7 @@ addEventListener('load', function load(){
   }
   for(var i = 0; i < events.length; i++){
     var event = events[i];
-    var target = document.querySelectorAll('[' + event.target + ']')[0];
+    var target = document.querySelectorAll('[data-ssrsx-event="' + event.target + '"]')[0];
     addEvent(target, event.event, event.module, event.f);
   }
 });

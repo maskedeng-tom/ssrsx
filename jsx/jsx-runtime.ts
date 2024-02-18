@@ -41,7 +41,7 @@ const parseAttributes = (props: Props | null): string => {
     return '';
   }
   if(needUid){
-    result.push(uid);
+    result.push(`data-ssrsx-event="${uid}"`);
   }
   return ` ${result.join(' ')}`;
 };
