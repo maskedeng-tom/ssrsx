@@ -19,7 +19,7 @@ interface SsrsxOptions<T = unknown> {
   clientRoot?: string;
   maxAge?: number;
   context?: (ctx: Koa.Context) => T;
-  filter?: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => boolean;
+  router?: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => boolean;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -179,8 +179,8 @@ const ssrsx = (option?: SsrsxOptions) => {
     const userContext = option?.context? option.context(ctx): undefined;
 
     // filter
-    const filter = option?.filter? option.filter(ctx, next, userContext): undefined;
-    if(filter === false){
+    const router = option?.router? option.router(ctx, next, userContext): undefined;
+    if(router === false){
       return;
     }
 
