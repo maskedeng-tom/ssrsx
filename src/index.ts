@@ -125,6 +125,14 @@ const ssrsx = (option?: SsrsxOptions) => {
     if(url.indexOf(baseUrl) === 0){
       const targetUrl = url.replace(baseUrl, '');
 
+      // cache
+      ctx.status = 200;
+      ctx.set('ETag', targetUrl);
+      if(ctx.fresh){
+        ctx.status = 304;
+        return;
+      }
+
       // require.js
       if(targetUrl === requireJs){
         ctx.body = getRequireJs() + getLoadEventsJs();
