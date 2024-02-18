@@ -28,4 +28,4 @@ const  createUid = () => {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { initializeParse, createUid, events };
+export { initializeParse, createUid, events,  };

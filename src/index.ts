@@ -18,7 +18,7 @@ interface SsrsxOptions<T = unknown> {
   workRoot?: string;
   serverRoot?: string;
   clientRoot?: string;
-  maxAge?: number;
+  cacheControlMaxAge?: number;
   context?: (ctx: Koa.Context) => T;
   router?: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => boolean;
 }
@@ -139,7 +139,7 @@ const ssrsx = (option?: SsrsxOptions) => {
       // cache
       ctx.status = 200;
       ctx.set('ETag', targetUrl);
-      ctx.set('Cache-Control', `max-age=${option?.maxAge ?? 60 * 60 * 24}`);
+      ctx.set('Cache-Control', `max-age=${option?.cacheControlMaxAge ?? 60 * 60 * 24}`);
       if(ctx.fresh){
         log('CACHE', targetUrl);
         ctx.status = 304;
@@ -155,9 +155,13 @@ const ssrsx = (option?: SsrsxOptions) => {
 
       // load compiled js
       const targetPath = path.join(workRoot, targetUrl);
+      if(!fs.existsSync(targetPath)){
+        logError('invalid js:', ctx.method, targetUrl);
+        await next();
+        return;
+      }
       log(ctx.method, targetUrl);
-      const data = fs.readFileSync(targetPath).toString();
-      ctx.body = data;
+      ctx.body = fs.readFileSync(targetPath).toString();
       return;
     }
 
@@ -195,6 +199,7 @@ const ssrsx = (option?: SsrsxOptions) => {
       loadCache[targetPath] = target;
     }
     if(!target){
+      logError('page load error:', targetPath.slice(serverRoot.length + 1));
       await next();
       return;
     }
@@ -205,21 +210,30 @@ const ssrsx = (option?: SsrsxOptions) => {
       // run target
       await target(ctx, next, userContext);
     }catch(e){
-      logError('parse error:', targetPath.slice(serverRoot.length + 1), e);
+      logError('page parse error:', targetPath.slice(serverRoot.length + 1), e);
       await next();
       return;
     }
 
     // add scripts
-    const body = /<(\s*)\/(\s*)body(\s*)>/i;
-    const output = String(ctx.body).replace(body, `
-<script type="text/javascript" src="${baseUrl}${requireJs}"></script>
-<script type="text/javascript">var events=${JSON.stringify(events)};require.config(${JSON.stringify(requireJsOptions)});</script>
-</body>`);
+    const addScript = `
+    <script type="text/javascript" src="${baseUrl}${requireJs}"></script>
+    <script type="text/javascript">var events=${JSON.stringify(events)};require.config(${JSON.stringify(requireJsOptions)});</script>
+    `;
 
-    // result
+    // find /body
+    const body = /<(\s*)\/(\s*)body(\s*)>/i;
+
+    // body tag not found
+    if(body.test(String(ctx.body)) === false){
+      logError('body tag not found:', targetPath.slice(serverRoot.length + 1));
+      ctx.body = '<!DOCTYPE html>' + String(ctx.body) + addScript;
+      return;
+    }
+
+    // insert script
     log(ctx.method, targetPath.slice(serverRoot.length + 1));
-    ctx.body = '<!DOCTYPE html>' + output;
+    ctx.body = '<!DOCTYPE html>' + String(ctx.body).replace(body, `${addScript}</body>`);
 
   };
 
