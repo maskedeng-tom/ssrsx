@@ -1,0 +1,7 @@
+{
+  "name": "jsx",
+  "version": "1.0.0.0",
+  "description": "Light weight jsx engine",
+  "main": "jsx-runtime.ts",
+  "license": "MIT"
+}
