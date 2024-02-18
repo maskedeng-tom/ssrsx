@@ -10,37 +10,6 @@ import { getDir } from './lib/getDir';
 import { readdirSyncRecursively } from './lib/readdirSyncRecursively';
 
 ////////////////////////////////////////////////////////////////////////////////
-/*
-type LazyFC = (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => void | Promise<void>;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const fcCache = new Map<() => Promise<any>, LazyFC>();
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const lazy = (o: () => Promise<any>): LazyFC => {
-  //
-  return (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => {
-    //
-    let fc = fcCache.get(o);
-    if(fc === undefined){
-      //
-      fc = () => {};
-      fcCache.set(o, fc);
-      //
-      void (async() => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        fc = ((await o())['default'] as LazyFC);
-        fcCache.set(o, fc);
-      })();
-      //
-    }
-    //
-    return fc(ctx, next, userContext);
-    //
-  };
-};
-*/
-////////////////////////////////////////////////////////////////////////////////
 
 interface SsrsxOptions<T = unknown> {
   requireJsPaths?: { [key: string]: string };
@@ -205,14 +174,13 @@ const ssrsx = (option?: SsrsxOptions) => {
       }
     }
 
+    // load target
     let target = loadCache[targetPath];
-    if(loadCache[targetPath]){
+    if(!loadCache[targetPath]){
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       target = (await import(targetPath))['default'] as (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => void | Promise<void>;
       loadCache[targetPath] = target;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    //const target = (await import(targetPath))['default'] as (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => void | Promise<void>;
     if(!target){
       await next();
       return;
