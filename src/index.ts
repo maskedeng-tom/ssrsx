@@ -27,6 +27,10 @@ interface SsrsxOptions<T = unknown> {
 
 const ssrsx = (option?: SsrsxOptions) => {
 
+  log('-----------------------------------------------');
+  log('Start ssrsx: option =', option);
+  log('-----------------------------------------------');
+
   const bust = (new Date()).getTime();
   const baseUrl = '/ssrsx/';
   const requireJs = `event-loader-${bust}.js`;
@@ -76,9 +80,12 @@ const ssrsx = (option?: SsrsxOptions) => {
       //
       let errorCount = 0;
       const files = readdirSyncRecursively(clientRoot);
+      if(files.length === 0){
+        resolve(true);
+        return;
+      }
       //
       for(let i = 0; i < files.length; i++){
-
         // target ts(x) file
         const file = files[i].slice(clientRoot.length + 1);
         const ext = path.extname(file);
@@ -100,9 +107,9 @@ const ssrsx = (option?: SsrsxOptions) => {
         childProcess.exec(cmd, (err, stdout, stderr) => {
           if (err) {
             ++errorCount;
-            logError(`compile error: ${file}\n${stderr}`);
+            logError(`Compile error: ${file}\n${stderr}`);
           }else{
-            log(`compile ok: ${file}`);
+            log(`Compiled: ${file}`);
           }
           if(i === files.length - 1){
             resolve(errorCount === 0);
@@ -117,20 +124,16 @@ const ssrsx = (option?: SsrsxOptions) => {
 
   const loadCache: {[path:string]: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => void | Promise<void>} = {};
 
+  const errorConsole = (message: string, description: string) => {
+    return `console.log("%c${message}%c : ${description}", "background-color:red;color:white;", "color:initial;")`;
+  };
+
   const handler = async (ctx: Koa.Context, next: Koa.Next) => {
     //
     await compile();
 
-    // cut hash and search
-    let url = ctx.url;
-    const searchPos = url.lastIndexOf('?');
-    if(searchPos !== -1){
-      url = url.slice(0, searchPos);
-    }
-    const hashPos = url.lastIndexOf('#');
-    if(hashPos !== -1){
-      url = url.slice(0, hashPos);
-    }
+    // target pathname
+    const url = ctx.URL.pathname;
 
     // ssrsx
     if(url.indexOf(baseUrl) === 0){
@@ -141,14 +144,14 @@ const ssrsx = (option?: SsrsxOptions) => {
       ctx.set('ETag', targetUrl);
       ctx.set('Cache-Control', `max-age=${option?.cacheControlMaxAge ?? 60 * 60 * 24}`);
       if(ctx.fresh){
-        log('CACHE', targetUrl);
+        log('CACHE', ctx.url, targetUrl);
         ctx.status = 304;
         return;
       }
 
       // require.js
       if(targetUrl === requireJs){
-        log(ctx.method, targetUrl);
+        log(ctx.method, ctx.url, targetUrl);
         ctx.body = getRequireJs() + getLoadEventsJs();
         return;
       }
@@ -156,11 +159,11 @@ const ssrsx = (option?: SsrsxOptions) => {
       // load compiled js
       const targetPath = path.join(workRoot, targetUrl);
       if(!fs.existsSync(targetPath)){
-        logError('invalid js:', ctx.method, targetUrl);
-        await next();
+        logError('Invalid event handler:', ctx.method, targetUrl);
+        ctx.body = errorConsole('Invalid event handler', targetUrl.split('.').slice(0, -1).join('.'));
         return;
       }
-      log(ctx.method, targetUrl);
+      log(ctx.method, ctx.url, targetUrl);
       ctx.body = fs.readFileSync(targetPath).toString();
       return;
     }
@@ -181,6 +184,7 @@ const ssrsx = (option?: SsrsxOptions) => {
         return;
       }
     }
+    const targetOffsetPath = targetPath.slice(serverRoot.length + 1);
 
     // userContext
     const userContext = option?.context? option.context(ctx): undefined;
@@ -199,7 +203,7 @@ const ssrsx = (option?: SsrsxOptions) => {
       loadCache[targetPath] = target;
     }
     if(!target){
-      logError('page load error:', targetPath.slice(serverRoot.length + 1));
+      logError('Page load error:', targetOffsetPath);
       await next();
       return;
     }
@@ -210,7 +214,7 @@ const ssrsx = (option?: SsrsxOptions) => {
       // run target
       await target(ctx, next, userContext);
     }catch(e){
-      logError('page parse error:', targetPath.slice(serverRoot.length + 1), e);
+      logError('Page parse error:', targetOffsetPath, e);
       await next();
       return;
     }
@@ -226,14 +230,14 @@ const ssrsx = (option?: SsrsxOptions) => {
 
     // body tag not found
     if(body.test(String(ctx.body)) === false){
-      logError('body tag not found:', targetPath.slice(serverRoot.length + 1));
-      ctx.body = '<!DOCTYPE html>' + String(ctx.body) + addScript;
+      logError('Body tag not found:', targetOffsetPath);
+      ctx.body = `<!DOCTYPE html>${String(ctx.body)}${addScript}<script>${errorConsole('body tag not found', targetOffsetPath)}</script>`;
       return;
     }
 
     // insert script
-    log(ctx.method, targetPath.slice(serverRoot.length + 1));
-    ctx.body = '<!DOCTYPE html>' + String(ctx.body).replace(body, `${addScript}</body>`);
+    log(ctx.method, ctx.url, targetOffsetPath);
+    ctx.body = `<!DOCTYPE html>${String(ctx.body).replace(body, `${addScript}</body>`)}`;
 
   };
 
