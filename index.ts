@@ -1,9 +1,6 @@
 import ssrsx, { SsrsxOptions } from './src/';
-import { initializeParse, events } from './src/core/eventSupport';
-import { getRequireJs, getLoadEventsJs } from './src/core/getJs';
-import { getDir } from './src/lib/getDir';
-import { readdirSyncRecursively } from './src/lib/readdirSyncRecursively';
+import { initializeStyles, setStyle, setScopedStyle, getStyles, styleToString } from './src/core/cssSupport';
 //
 export default ssrsx;
 export { ssrsx, SsrsxOptions };
-export { initializeParse, events, getRequireJs, getLoadEventsJs, getDir, readdirSyncRecursively };
+export { initializeStyles, setStyle, setScopedStyle, getStyles, styleToString };

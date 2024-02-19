@@ -1,3 +1,5 @@
+import { shortId, resetShortId } from '../lib/shortId';
+
 ////////////////////////////////////////////////////////////////////////////////
 
 interface ElementEvent {
@@ -10,22 +12,22 @@ interface ElementEvent {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-let uidSource = 0;
+//let uidSource = 0;
 let events: ElementEvent[] = [];
 let uidPrefix: string = '';
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const initializeParse = (prefix: string = 'uid') => {
-  uidSource = 0;
+  resetShortId();
   events = [];
   uidPrefix = prefix;
 };
 
 const  createUid = () => {
-  return uidPrefix + ('000000'+(uidSource++).toString(36)).slice(-6);
+  return shortId(uidPrefix);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { initializeParse, createUid, events,  };
+export { initializeParse, createUid, events };

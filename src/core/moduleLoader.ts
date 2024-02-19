@@ -14,7 +14,7 @@ const moduleLoader = () => {
     }
     return target;
   };
-  
+
 };
 
 export { moduleLoader };

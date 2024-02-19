@@ -216,4 +216,37 @@ animation-play-state CSS3
 animation-timing-function CSS3
 */
 
-export { CSSStyle };
+const ignorePixelStyle = [
+  'boxFlex',
+  'boxFlexGroup',
+  'columnCount',
+  'fillOpacity',
+  'flex',
+  'flexGrow',
+  'flexPositive',
+  'flexShrink',
+  'flexNegative',
+  'fontWeight',
+  'lineClamp',
+  'lineHeight',
+  'opacity',
+  'order',
+  'orphans',
+  'strokeOpacity',
+  'widows',
+  'zIndex',
+  'zoom',
+  //
+  'gridColumn',
+  'gridColumnEnd',
+  'gridColumnStart',
+  'gridRow',
+  'gridRowEnd',
+  'gridRowStart',
+];
+
+
+// スタイル 定義
+type SassStyles = CSSStyle | {[key:string]: SassStyles | string | number | undefined | null | (string | number)[]};
+
+export { type CSSStyle, type SassStyles, ignorePixelStyle };

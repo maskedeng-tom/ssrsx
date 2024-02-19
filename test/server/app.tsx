@@ -2,6 +2,7 @@ import Koa from 'koa';
 import { getLoginUser } from './lib/session';
 import { Html } from './components/Html';
 import { Head } from './components/Head';
+import { setScopedStyle } from '../../index';
 
 const handler = (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => {
 
@@ -11,9 +12,15 @@ const handler = (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => {
     return;
   }
 
+  const scope = setScopedStyle({
+    'div':{
+      color: 'red'
+    }
+  });
+
   ctx.body = <>
     <Html header={<Head title='App'/>}>
-      <div>
+      <div {...scope}>
         APP - {user?.username}
       </div>
       <div>

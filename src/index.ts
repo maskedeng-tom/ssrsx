@@ -12,6 +12,7 @@ import { TscOption } from './types/TscOption';
 import { compiler } from './core/compiler';
 import { moduleLoader } from './core/moduleLoader';
 import { errorConsole } from './lib/errorConsole';
+import { initializeStyles, getStyles } from './core/cssSupport';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -177,6 +178,8 @@ const ssrsx = (option?: SsrsxOptions) => {
     }
     // run module
     try{
+      // initialize styles
+      initializeStyles();
       // initialize parse
       initializeParse();
       // run module
@@ -191,24 +194,32 @@ const ssrsx = (option?: SsrsxOptions) => {
     ctx.status = ctx.status || 200;
     log(ctx.method, ctx.status, ctx.url, targetOffsetPath);
 
+    // body
+    let body = String(ctx.body);
+
+    // add styles
+    const addStyle = `<style>${getStyles()}</style>`;
+    // find /head
+    const headCloseTag = /<(\s*)\/(\s*)head(\s*)>/i;
+    // insert style
+    body = `${String(body).replace(headCloseTag, `${addStyle}</head>`)}`;
+
     // add scripts
     const addScript = `<script type="text/javascript" src="${ssrsxBaseUrl}${requireJs}"></script>
     <script type="text/javascript">
     var ssrsxHotReload=${option?.hotReload ?? 0};
     var ssrsxHotReloadWait=${option?.hotReloadWait ?? 1000};
     var ssrsxEvents=${JSON.stringify(events)};require.config(${JSON.stringify(requireJsOptions)});</script>`;
-
     // find /body
-    const body = /<(\s*)\/(\s*)body(\s*)>/i;
-
+    const bodyCloseTag = /<(\s*)\/(\s*)body(\s*)>/i;
     // body tag not found
-    if(body.test(String(ctx.body)) === false){
-      ctx.body = `<!DOCTYPE html>${String(ctx.body)}${addScript}<script>${errorConsole('body tag not found', targetOffsetPath)}</script>`;
+    if(bodyCloseTag.test(body) === false){
+      body = `<!DOCTYPE html>${body}${addScript}<script>${errorConsole('body tag not found', targetOffsetPath)}</script>`;
       return;
     }
 
     // insert script
-    ctx.body = `<!DOCTYPE html>${String(ctx.body).replace(body, `${addScript}</body>`)}`;
+    ctx.body = `<!DOCTYPE html>${String(body).replace(bodyCloseTag, `${addScript}</body>`)}`;
 
   };
 
