@@ -31,7 +31,7 @@ interface SsrsxOptions<T = unknown> {
   router?: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => boolean;
   // for development
   sourceMap?: boolean;
-  hotReload?: number;
+  hotReload?: number | boolean;
   hotReloadWait?: number;
 }
 
@@ -41,7 +41,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
 
   const option = ssrsxOption ?? {};
   if(option?.development){
-    option.hotReload = option.hotReload ?? 8878;
+    option.hotReload = option.hotReload ?? true;
     option.sourceMap = option.sourceMap ?? true;
   }
 
@@ -180,7 +180,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
   // for hot reload
 
   if(option?.hotReload){
-    new Server({ port: option.hotReload });
+    new Server({ port: (typeof option.hotReload === 'boolean')? 8878: option.hotReload});
   }
 
   //////////////////////////////////////////////////////////////////////////////
