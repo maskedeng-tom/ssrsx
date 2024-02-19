@@ -32,7 +32,6 @@ const startServer = () => {
 
   app.use(ssrsx({
     hotReload: 5001,
-    workRoot: 'test/ssrsx',
     clientRoot: 'test/client',
     serverRoot: 'test/server',
     requireJsPaths: {

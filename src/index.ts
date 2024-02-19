@@ -21,7 +21,7 @@ interface SsrsxOptions<T = unknown> {
   serverRoot?: string;
   clientRoot?: string;
   requireJsPaths?: { [key: string]: string };
-  tscOption?: TscOption;
+  sourceMap?: boolean;
   cacheControlMaxAge?: number;
   hotReload?: number;
   hotReloadWait?: number;
@@ -41,17 +41,19 @@ const ssrsx = (option?: SsrsxOptions) => {
   //////////////////////////////////////////////////////////////////////////////
 
   const bust = (new Date()).getTime();
-  const ssrsxBaseUrl = '/ssrsx/';
+  const ssrsxBaseUrl = '/ssrsx-client-script/';
   const requireJs = `event-loader-${bust}.js`;
 
   //////////////////////////////////////////////////////////////////////////////
 
-  const workRoot = getDir(option?.workRoot, './ssrsx');
+  const workRoot = getDir(option?.workRoot, './.ssrsx');
   const serverRoot = getDir(option?.serverRoot, './src/server');
   const clientRoot = getDir(option?.clientRoot, './src/client');
+  const clientOffset = clientRoot.replace(process.cwd(), '');
   log('workRoot:', workRoot);
   log('serverRoot:', serverRoot);
   log('clientRoot:', clientRoot);
+  log('clientOffset:', clientOffset);
 
   //////////////////////////////////////////////////////////////////////////////
 
@@ -63,17 +65,17 @@ const ssrsx = (option?: SsrsxOptions) => {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  const tscOptions: TscOption = Object.assign({
+  const tscOptions: TscOption = {
     target: 'ES6',
     module: 'umd',
-    sourceMap: true,
+    inlineSourceMap: option?.sourceMap ?? true,
     outDir: workRoot,
     removeComments: true,
     esModuleInterop: true,
     forceConsistentCasingInFileNames: true,
     strict: true,
     skipLibCheck: true
-  }, option?.tscOption);
+  };
 
   //////////////////////////////////////////////////////////////////////////////
 
@@ -87,8 +89,22 @@ const ssrsx = (option?: SsrsxOptions) => {
     // target pathname
     const url = ctx.URL.pathname;
 
+    // source map request
+    if(tscOptions.inlineSourceMap){
+      if(url.indexOf(clientOffset) >= 0 && url.slice(-3) !== '.js'){
+        const targetMapPath = path.join(clientRoot.slice(0, -clientOffset.length), url);
+        if(!fs.existsSync(targetMapPath)){
+          return false;
+        }
+        log(ctx.method, ctx.status, ctx.url, targetMapPath);
+        ctx.body = fs.readFileSync(targetMapPath).toString();
+        return true;
+      }
+    }
+
+
     // ssrsx
-    if(url.indexOf(ssrsxBaseUrl) !== 0){
+    if(url.indexOf(ssrsxBaseUrl) < 0){
       return false;
     }
     const targetUrl = url.replace(ssrsxBaseUrl, '');
@@ -119,6 +135,7 @@ const ssrsx = (option?: SsrsxOptions) => {
     }
     log(ctx.method, ctx.status, ctx.url, targetUrl);
     ctx.body = fs.readFileSync(targetPath).toString();
+
     return true;
 
   };

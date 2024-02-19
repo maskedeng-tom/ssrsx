@@ -1,6 +1,5 @@
 {
   "watch": ["src", "jsx", "client", "test", "index.ts", "index.d.ts"],
   "ext": "ts,tsx,js",
-  "ignore": ["test/ssrsx"],
   "exec": "DEBUG=ssrsx* ts-node ./test/index.ts"
 }
