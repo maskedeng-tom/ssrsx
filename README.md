@@ -4,6 +4,3 @@
 
 
 ## ToDos
-
-- [ ] style parser
-- [ ] require folder layout change

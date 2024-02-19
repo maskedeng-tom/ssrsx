@@ -12,7 +12,6 @@ interface ElementEvent {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//let uidSource = 0;
 let events: ElementEvent[] = [];
 let uidPrefix: string = '';
 

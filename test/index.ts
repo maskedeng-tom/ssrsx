@@ -32,10 +32,12 @@ const startServer = () => {
 
   app.use(ssrsx({
     hotReload: 5001,
+    requireJsRoot: 'test/requireJs',
     clientRoot: 'test/client',
     serverRoot: 'test/server',
     requireJsPaths: {
-      'jquery': 'https://code.jquery.com/jquery-3.7.1.min',
+      //'jquery': 'https://code.jquery.com/jquery-3.7.1.min',
+      'jquery': 'jquery.min',
     },
     context: (ctx) => {
       return {

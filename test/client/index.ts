@@ -10,9 +10,6 @@ const check = () => {
   }else{
     submit.prop('disabled', true);
   }
-  setTimeout(() => {
-    throw new Error('test');
-  }, 1000);
 };
 check();
 

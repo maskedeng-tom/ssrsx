@@ -1,5 +1,7 @@
 import { FunctionComponent, Props, VirtualChildren } from '../src/types/types';
 import { createUid, events } from '../src/core/eventSupport';
+import { styleToString } from '../src/styleToString/styleToString';
+import { SassStyles } from '../src/styleToString/cssTypes';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -32,6 +34,27 @@ const parseAttributes = (props: Props | null): string => {
       events.push({target, event, module, f: f ?? key});
       needUid = true;
       //
+      continue;
+    }
+    //
+    if(key === 'className'){
+      result.push(`class="${String(props[key])}"`);
+      continue;
+    }
+    if(key === 'htmlFor'){
+      result.push(`for="${String(props[key])}"`);
+      continue;
+    }
+    if(key === 'style'){
+      result.push(`style="${typeof props[key] === 'string' ?
+        String(props[key])
+        :
+        (typeof props[key] === 'object' ?
+          styleToString(props[key] as SassStyles)
+          :
+          ''
+        )
+      }"`);
       continue;
     }
     //

@@ -21,7 +21,9 @@ interface SsrsxOptions<T = unknown> {
   serverRoot?: string;
   clientRoot?: string;
   //
+  requireJsRoot?: string;
   requireJsPaths?: { [key: string]: string };
+  //
   cacheControlMaxAge?: number;
   //
   context?: (ctx: Koa.Context) => T;
@@ -49,13 +51,16 @@ const ssrsx = (option?: SsrsxOptions) => {
   //////////////////////////////////////////////////////////////////////////////
 
   const workRoot = getDir(option?.workRoot, './.ssrsx');
+  const requireJsRoot = getDir(option?.requireJsRoot, `./src${ssrsxBaseUrl}`);
   const serverRoot = getDir(option?.serverRoot, './src/server');
   const clientRoot = getDir(option?.clientRoot, './src/client');
   const clientOffset = clientRoot.replace(process.cwd(), '');
   log('workRoot:', workRoot);
+  log('requireJsRoot:', requireJsRoot);
   log('serverRoot:', serverRoot);
   log('clientRoot:', clientRoot);
   log('clientOffset:', clientOffset);
+  log('-----------------------------------------------');
 
   //////////////////////////////////////////////////////////////////////////////
 
@@ -82,7 +87,7 @@ const ssrsx = (option?: SsrsxOptions) => {
   //////////////////////////////////////////////////////////////////////////////
   // source map handler
 
-  const sourceMapHandler = async (ctx: Koa.Context, _next: Koa.Next) => {
+  const sourceMapHandler = (ctx: Koa.Context, _next: Koa.Next): boolean => {
     const url = ctx.URL.pathname;
 
     if(!tscOptions.inlineSourceMap){
@@ -106,7 +111,7 @@ const ssrsx = (option?: SsrsxOptions) => {
 
   const compiler = createCompiler();
 
-  const ssrsxHandler = async (ctx: Koa.Context, _next: Koa.Next) => {
+  const ssrsxHandler = async (ctx: Koa.Context, next: Koa.Next): Promise<boolean> => {
 
     // compile
     await compiler.compile(clientRoot, workRoot, tscOptions);
@@ -115,8 +120,8 @@ const ssrsx = (option?: SsrsxOptions) => {
     const url = ctx.URL.pathname;
 
     // source map request
-    if(await sourceMapHandler(ctx, _next)){
-      return;
+    if(sourceMapHandler(ctx, next)){
+      return false;
     }
 
     // ssrsx
@@ -144,15 +149,24 @@ const ssrsx = (option?: SsrsxOptions) => {
 
     // output compiled js
     const js = compiler.getJs(targetUrl);
-    if(!js){
-      ctx.body = errorConsole('Invalid event handler', targetUrl.split('.').slice(0, -1).join('.'));
-      logError('Invalid event handler:', ctx.method, targetUrl);
-      return;
+    if(js){
+      ctx.body = js;
+      log(ctx.method, ctx.status, ctx.url, targetUrl);
+      return true;
     }
-    ctx.body = js;
-    log(ctx.method, ctx.status, ctx.url, targetUrl);
-    return true;
 
+    // requireJsRoot
+    const requireJsFile = path.join(requireJsRoot, targetUrl);
+    if(fs.existsSync(requireJsFile)){
+      ctx.body = fs.readFileSync(requireJsFile).toString();
+      log(ctx.method, ctx.status, ctx.url, targetUrl);
+      return true;
+    }
+
+    // error
+    ctx.body = errorConsole('Invalid event handler', `${targetUrl.split('.').slice(0, -1).join('.')} (${targetUrl})`);
+    logError('Invalid event handler:', ctx.method, targetUrl);
+    return false;
   };
 
   //////////////////////////////////////////////////////////////////////////////

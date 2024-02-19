@@ -18,50 +18,63 @@ const handler = (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => {
   }
 
   setStyle({
+    'html': {
+      width: '100%',
+      height: '100%',
+    },
     'body': {
-      'background-color': '#f0f0f0',
-      'font-family': 'Arial, sans-serif',
-      'padding': '20px',
+      width: '100%',
+      height: '100%',
+      backgroundColor: '#f0f0f0',
+      boxSizing: 'border-box',
+      margin: 0,
+      padding: 0,
+      '*' : {
+        boxSizing: 'border-box',
+        margin: 0,
+        padding: 0,
+      }
     },
-    'form': {
-      'border': '1px solid #e0e0e0',
-      'padding': '20px',
-      'background-color': '#ffffff',
-      'box-shadow': '0px 0px 10px #e0e0e0',
+    '.container': {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+      height: '100%',
     },
-    'input': {
-      'width': '100%',
-      'padding': '10px',
-      'margin': '10px 0px',
-      'border': '1px solid #e0e0e0',
-      'border-radius': '5px',
+    '.login-form': {
+      width: 300,
+      padding: 20,
+      backgroundColor: '#ffffff',
     },
-    'input[type=submit]': {
-      'background-color': '#007bff',
-      'color': '#ffffff',
-      'cursor': 'pointer',
+    input: {
+      width: '100%',
+      padding: '10px',
+      margin: '10px 0px',
     },
   });
 
   ctx.body = <>
     <Html header={<Head title='Login'/>}>
-      <div>
-        <form method="post" action="/login">
-
-          <div>
-            <label>Username:
-              <input type="text" name="username" onInput="index.onInputUsername"/>
-            </label>
-          </div>
-          <div>
-            <label>Password:
-              <input type="password" name="password" onInput="index.onInputPassword"/>
-            </label>
-          </div>
-          <div>
-            <input type="submit" name="login" value="login" />
-          </div>
-        </form>
+      <div className="container">
+        <div className="login-form">
+          <div style={{textAlign: 'center'}}>Login</div>
+          <form method="post" action="/login">
+            <div>
+              <label>Username:
+                <input type="text" name="username" onInput="index.onInputUsername"/>
+              </label>
+            </div>
+            <div>
+              <label>Password:
+                <input type="password" name="password" onInput="index.onInputPassword"/>
+              </label>
+            </div>
+            <div>
+              <input type="submit" name="login" value="login" />
+            </div>
+          </form>
+        </div>
       </div>
     </Html>
   </>;
