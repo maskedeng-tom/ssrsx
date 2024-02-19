@@ -1,12 +1,5 @@
-import ssrsx, { SsrsxOptions } from './src/';
-import { initializeStyles, setStyle, setScopedStyle, getStyles, styleToString } from './src/core/cssSupport';
-//
-export default ssrsx;
-export { ssrsx, SsrsxOptions };
-export { initializeStyles, setStyle, setScopedStyle, getStyles, styleToString };
-
 // eslint-disable-next-line @typescript-eslint/no-namespace
-namespace JSX {
+export namespace JSX {
 
   // 仮想Element定義
   export type Element = import('./src/types/types').VirtualElement;
@@ -40,4 +33,9 @@ namespace JSX {
 
 }
 
-export { JSX };
+import ssrsx, { SsrsxOptions } from './src/';
+import { initializeStyles, setStyle, setScopedStyle, getStyles, styleToString } from './src/core/cssSupport';
+//
+export default ssrsx;
+export { ssrsx, SsrsxOptions };
+export { initializeStyles, setStyle, setScopedStyle, getStyles, styleToString };
