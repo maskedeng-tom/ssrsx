@@ -17,6 +17,7 @@ import { initializeStyles, getStyles } from './core/cssSupport';
 ////////////////////////////////////////////////////////////////////////////////
 
 interface SsrsxOptions<T = unknown> {
+  development?: boolean;
   workRoot?: string;
   serverRoot?: string;
   clientRoot?: string;
@@ -36,7 +37,13 @@ interface SsrsxOptions<T = unknown> {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const ssrsx = (option?: SsrsxOptions) => {
+const ssrsx = (ssrsxOption?: SsrsxOptions) => {
+
+  const option = ssrsxOption ?? {};
+  if(option?.development){
+    option.hotReload = option.hotReload ?? 8878;
+    option.sourceMap = option.sourceMap ?? true;
+  }
 
   log('-----------------------------------------------');
   log('Start ssrsx: option =', option);
@@ -51,7 +58,7 @@ const ssrsx = (option?: SsrsxOptions) => {
   //////////////////////////////////////////////////////////////////////////////
 
   const workRoot = getDir(option?.workRoot, './.ssrsx');
-  const requireJsRoot = getDir(option?.requireJsRoot, `./src${ssrsxBaseUrl}`);
+  const requireJsRoot = getDir(option?.requireJsRoot, './src/requireJs');
   const serverRoot = getDir(option?.serverRoot, './src/server');
   const clientRoot = getDir(option?.clientRoot, './src/client');
   const clientOffset = clientRoot.replace(process.cwd(), '');
@@ -75,7 +82,7 @@ const ssrsx = (option?: SsrsxOptions) => {
   const tscOptions: TscOption = {
     target: 'ES6',
     module: 'umd',
-    inlineSourceMap: option?.sourceMap ?? true,
+    inlineSourceMap: option?.sourceMap ?? false,
     outDir: workRoot,
     removeComments: true,
     esModuleInterop: true,
