@@ -1,8 +1,8 @@
 import Koa from 'koa';
-import { getLoginUser } from './lib/session';
-import { Html } from './components/Html';
-import { Head } from './components/Head';
-import { setScopedStyle } from '../../index';
+import { getLoginUser } from '../lib/session';
+import { Html } from '../components/Html';
+import { Head } from '../components/Head';
+import { setScopedStyle } from '../../../index';
 
 const handler = (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => {
 
@@ -21,13 +21,13 @@ const handler = (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => {
   ctx.body = <>
     <Html header={<Head title='App'/>}>
       <div {...scope}>
-        APP - {user?.username}
+        SUB - {user?.username}
       </div>
       <div>
         <a href="/logout">Logout</a>
       </div>
       <div>
-        <a href="/sub">Sub</a>
+        <a href="/app">App</a>
       </div>
     </Html>
   </>;
