@@ -6,6 +6,7 @@ import bodyParser from 'koa-bodyparser';
 
 import ssrsx from '../src/';
 
+
 const startServer = () => {
 
   const app = new Koa();
@@ -30,6 +31,7 @@ const startServer = () => {
   app.use(bodyParser());
 
   app.use(ssrsx({
+    hotReload: 5001,
     workRoot: 'test/ssrsx',
     clientRoot: 'test/client',
     serverRoot: 'test/server',
