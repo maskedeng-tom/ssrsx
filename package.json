@@ -21,7 +21,7 @@
     "url": "https://github.com/maskedeng-tom/ssrsx.git"
   },
   "scripts": {
-    "build": "rimraf ./dist && tsc --project tsconfig.build.json && cp -r client dist",
+    "build": "rimraf ./dist && tsc --project tsconfig.build.json && echo '/// <reference path=\"../ssrsx.d.ts\" />' >> dist/index.d.ts && cp -r client dist",
     "prepublishOnly": "npm version patch && npm run build",
     "start": "nodemon",
     "test": "jest"
