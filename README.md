@@ -6,6 +6,8 @@
 ## ToDos
 
 - [ ] style parser
-- [ ] css loader
-- [ ] remove before compile client scripts
-- [ ] auto reload
+- [x] css loader
+- [ ] remove before compile client scripts and safe
+- [x] auto reload
+- [ ] require folder layout change
+- [ ] .d.ts marge
