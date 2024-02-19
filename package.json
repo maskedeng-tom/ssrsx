@@ -1,6 +1,6 @@
 {
   "name": "@maskedeng-tom/ssrsx",
-  "version": "0.1.36",
+  "version": "0.1.37",
   "description": "server side renderer with tsx(jsx)",
   "keywords": [
     "html",
@@ -22,7 +22,7 @@
   },
   "scripts": {
     "build": "rimraf ./dist && tsc --project tsconfig.build.json && npm run modDist && cp -r client dist",
-    "modDist" : "echo '/// <reference path=\"../ssrsx.d.ts\" />' > data.tmp; cat dist/index.d.ts >> data.tmp; cat data.tmp > dist/index.d.ts && rm data.tmp",
+    "modDist": "echo '/// <reference path=\"../ssrsx.d.ts\" />' > data.tmp; cat dist/index.d.ts >> data.tmp; cat data.tmp > dist/index.d.ts && rm data.tmp",
     "prepublishOnly": "npm version patch && npm run build",
     "start": "nodemon",
     "test": "jest"
