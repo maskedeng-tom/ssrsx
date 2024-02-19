@@ -9,7 +9,7 @@ import { initializeParse, events } from './core/eventSupport';
 import { getRequireJs, getLoadEventsJs } from './core/getJs';
 import { getDir } from './lib/getDir';
 import { TscOption } from './types/TscOption';
-import { compiler } from './core/compiler';
+import { createCompiler } from './core/compiler';
 import { moduleLoader } from './core/moduleLoader';
 import { errorConsole } from './lib/errorConsole';
 import { initializeStyles, getStyles } from './core/cssSupport';
@@ -20,14 +20,16 @@ interface SsrsxOptions<T = unknown> {
   workRoot?: string;
   serverRoot?: string;
   clientRoot?: string;
+  //
   requireJsPaths?: { [key: string]: string };
-  sourceMap?: boolean;
   cacheControlMaxAge?: number;
-  hotReload?: number;
-  hotReloadWait?: number;
+  //
   context?: (ctx: Koa.Context) => T;
   router?: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => boolean;
-  // TODO
+  // for development
+  sourceMap?: boolean;
+  hotReload?: number;
+  hotReloadWait?: number;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,30 +80,44 @@ const ssrsx = (option?: SsrsxOptions) => {
   };
 
   //////////////////////////////////////////////////////////////////////////////
+  // source map handler
 
-  const compile = compiler();
+  const sourceMapHandler = async (ctx: Koa.Context, _next: Koa.Next) => {
+    const url = ctx.URL.pathname;
+
+    if(!tscOptions.inlineSourceMap){
+      return false;
+    }
+    if(url.slice(-3) === '.js' || url.indexOf(clientOffset) < 0){
+      return false;
+    }
+    const targetMapPath = path.join(clientRoot.slice(0, -clientOffset.length), url);
+    if(!fs.existsSync(targetMapPath)){
+      return false;
+    }
+
+    ctx.status = 200;
+    ctx.body = fs.readFileSync(targetMapPath).toString();
+    log(ctx.method, ctx.status, ctx.url, targetMapPath);
+    return true;
+  };
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  const compiler = createCompiler();
 
   const ssrsxHandler = async (ctx: Koa.Context, _next: Koa.Next) => {
 
     // compile
-    await compile(clientRoot, workRoot, tscOptions);
+    await compiler.compile(clientRoot, workRoot, tscOptions);
 
     // target pathname
     const url = ctx.URL.pathname;
 
     // source map request
-    if(tscOptions.inlineSourceMap){
-      if(url.indexOf(clientOffset) >= 0 && url.slice(-3) !== '.js'){
-        const targetMapPath = path.join(clientRoot.slice(0, -clientOffset.length), url);
-        if(!fs.existsSync(targetMapPath)){
-          return false;
-        }
-        log(ctx.method, ctx.status, ctx.url, targetMapPath);
-        ctx.body = fs.readFileSync(targetMapPath).toString();
-        return true;
-      }
+    if(await sourceMapHandler(ctx, _next)){
+      return;
     }
-
 
     // ssrsx
     if(url.indexOf(ssrsxBaseUrl) < 0){
@@ -111,7 +127,7 @@ const ssrsx = (option?: SsrsxOptions) => {
 
     // cache
     ctx.status = 200;
-    ctx.set('ETag', targetUrl);
+    ctx.set('ETag', ctx.url);
     ctx.set('Cache-Control', `max-age=${option?.cacheControlMaxAge ?? 60 * 60 * 24}`);
     if(ctx.fresh){
       ctx.status = 304;
@@ -121,29 +137,30 @@ const ssrsx = (option?: SsrsxOptions) => {
 
     // require.js
     if(targetUrl === requireJs){
-      log(ctx.method, ctx.status, ctx.url, targetUrl);
       ctx.body = getRequireJs() + getLoadEventsJs();
+      log(ctx.method, ctx.status, ctx.url, targetUrl);
       return true;
     }
 
-    // load compiled js
-    const targetPath = path.join(workRoot, targetUrl);
-    if(!fs.existsSync(targetPath)){
-      logError('Invalid event handler:', ctx.method, targetUrl);
+    // output compiled js
+    const js = compiler.getJs(targetUrl);
+    if(!js){
       ctx.body = errorConsole('Invalid event handler', targetUrl.split('.').slice(0, -1).join('.'));
+      logError('Invalid event handler:', ctx.method, targetUrl);
       return;
     }
+    ctx.body = js;
     log(ctx.method, ctx.status, ctx.url, targetUrl);
-    ctx.body = fs.readFileSync(targetPath).toString();
-
     return true;
 
   };
 
   //////////////////////////////////////////////////////////////////////////////
-
   // for hot reload
-  new Server({ port: 5001 });
+
+  if(option?.hotReload){
+    new Server({ port: option.hotReload });
+  }
 
   //////////////////////////////////////////////////////////////////////////////
 

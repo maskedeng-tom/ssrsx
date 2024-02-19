@@ -1,3 +1,4 @@
+import fs from 'fs';
 import debug from 'debug';
 const log = debug('ssrsx');
 const logError = debug('ssrsx:error');
@@ -6,10 +7,12 @@ import childProcess from 'child_process';
 import { readdirSyncRecursively } from '../lib/readdirSyncRecursively';
 import { TscOption } from '../types/TscOption';
 
-const compiler = () => {
+const createCompiler = () => {
+
+  const jsCache: { [key: string]: string } = {};
 
   let compiled = false;
-  return async (clientRoot: string, workRoot: string, tscOptions: TscOption) => {
+  const compile = async (clientRoot: string, workRoot: string, tscOptions: TscOption) => {
     if(compiled){
       return;
     }
@@ -42,13 +45,22 @@ const compiler = () => {
         }
 
         // compile
-        const cmd = `tsc ${path.join(clientRoot, file)} ${options.join(' ')}`;
+        const fileName = path.join(clientRoot, file);
+        const outputFileName = path.join(workRoot, file).split('.').slice(0, -1).join('.') + '.js';
+        //
+        const cmd = `tsc ${fileName} ${options.join(' ')}`;
         childProcess.exec(cmd, (err, stdout, stderr) => {
           if (err) {
             ++errorCount;
             logError(`Compile error: ${file}\n${stderr}`);
           }else{
             log(`Compiled: ${file}`);
+            if(fs.existsSync(outputFileName)){
+              const js = fs.readFileSync(outputFileName).toString();
+              if(js){
+                jsCache[file.split('.').slice(0, -1).join('.') + '.js'] = js;
+              }
+            }
           }
           if(i === files.length - 1){
             resolve(errorCount === 0);
@@ -59,6 +71,15 @@ const compiler = () => {
     });
   };
 
+  const getJs = (file: string) => {
+    return jsCache[file];
+  };
+
+  return {
+    compile,
+    getJs,
+  };
+
 };
 
-export { compiler };
+export { createCompiler };
