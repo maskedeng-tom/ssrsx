@@ -35,6 +35,8 @@ interface SsrsxOptions<T = unknown> {
   hotReloadWait?: number;
 }
 
+const HotReloadDefault = 33730;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 const ssrsx = (ssrsxOption?: SsrsxOptions) => {
@@ -180,7 +182,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
   // for hot reload
 
   if(option?.hotReload){
-    new Server({ port: (typeof option.hotReload === 'boolean')? 8878: option.hotReload});
+    new Server({ port: (typeof option.hotReload === 'boolean')? HotReloadDefault: option.hotReload});
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -262,7 +264,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     // add scripts
     const addScript = `<script type="text/javascript" src="${ssrsxBaseUrl}${requireJs}"></script>
     <script type="text/javascript">
-    var ssrsxHotReload=${option?.hotReload ?? 0};
+    var ssrsxHotReload=${option?.hotReload? HotReloadDefault: false};
     var ssrsxHotReloadWait=${option?.hotReloadWait ?? 1000};
     var ssrsxEvents=${JSON.stringify(events)};require.config(${JSON.stringify(requireJsOptions)});</script>`;
     // find /body

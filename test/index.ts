@@ -2,10 +2,8 @@ import Koa from 'koa';
 import koaStatic from 'koa-static';
 import session from 'koa-session';
 //import ssrsx from '@maskedeng-tom/ssrsx';
-import bodyParser from 'koa-bodyparser';
-
 import ssrsx from '../src/';
-
+import bodyParser from 'koa-bodyparser';
 
 const startServer = () => {
 
@@ -31,7 +29,8 @@ const startServer = () => {
   app.use(bodyParser());
 
   app.use(ssrsx({
-    hotReload: 5001,
+    development: true,
+    //hotReload: 5001,
     requireJsRoot: 'test/requireJs',
     clientRoot: 'test/client',
     serverRoot: 'test/server',
