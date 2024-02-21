@@ -2,8 +2,67 @@ import Koa from 'koa';
 import koaStatic from 'koa-static';
 import session from 'koa-session';
 //import ssrsx from '@maskedeng-tom/ssrsx';
-import ssrsx from '../src/';
+import ssrsx, { ExpressProps, KoaProps } from '../src/';
 import bodyParser from 'koa-bodyparser';
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+import { Router } from '../src/router/Router';
+import { Routes } from '../src/router/Routes';
+import { Route } from '../src/router/Route';
+
+import Index from './server/Index';
+
+////////////////////////////////////////////////////////////////////////////////
+
+interface UserContext {
+  db: string;
+}
+
+export { UserContext };
+
+const App = () => {
+  //
+  return <>
+    <Router /*basename='/tt'*/>
+      <html lang="ja">
+        <head>
+          <meta charset="utf-8"/>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        </head>
+        <body>
+          <div>
+            <Routes>
+              <Route path="ss">
+                <div>-ss-</div>
+                <Route path=":zz/yy">
+                  <div>-zz-</div>
+                  <Route path="/">
+                    <div>zz/</div>
+                  </Route>
+                  <Route path="xx">
+                    <div>xx</div>
+                  </Route>
+                </Route>
+
+                <Route path="tt">
+                  <div>tt</div>
+                </Route>
+              </Route>
+              <Route path="*">
+                <div>ALL</div>
+              </Route>
+            </Routes>
+          </div>
+        </body>
+      </html>
+    </Router>
+  </>;
+  //
+};
+
 
 const startServer = () => {
 
@@ -33,19 +92,16 @@ const startServer = () => {
     //hotReload: 5001,
     requireJsRoot: 'test/requireJs',
     clientRoot: 'test/client',
-    serverRoot: 'test/server',
     requireJsPaths: {
       //'jquery': 'https://code.jquery.com/jquery-3.7.1.min',
       'jquery': 'jquery.min',
     },
-    context: (ctx) => {
+    context: (ctx): UserContext => {
       return {
-        database: 'DB',
+        db: 'DB',
       };
     },
-    router: (ctx, next, userContext) => {
-      return true;
-    },
+    app: <App/>
   }));
 
   app.use(koaStatic('test/server'));

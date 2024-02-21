@@ -1,33 +1,42 @@
 declare namespace JSX {
 
-  // 仮想Element定義
-  type Element = import('./src/types/types').VirtualElement;
+  //////////////////////////////////////////////////////////////////////////////
 
-  // スタイル引数
-  type StyleProps = import('./src/types/types').StyleProps;
+  // virtual element
+  type Element = import('./jsx/jsx-runtime').VirtualElement;
 
-  // 仮想子ノード
-  type Children = import('./src/types/types').VirtualChildren;
+  // style props
+  type CssProps = import('./src/styleToString/cssTypes').CssProps;
 
-  // エレメントの子ノードの定義 => children
+  // child nodes
+  type Children = import('./jsx/jsx-runtime').VirtualChildren;
+
+  // ext contexts
+  type SsrsxContext = import('./jsx/jsx-parser').SsrsxContext;
+
+  //////////////////////////////////////////////////////////////////////////////
+
   interface ElementChildrenAttribute {
     children: Children;
   }
 
   //////////////////////////////////////////////////////////////////////////////
+  /*
+  interface IntrinsicAttributes {
+    ssrsx?: SsrsxContext;
+    koa?: unknown;
+    express?: unknown;
+  }
+  */
+  //////////////////////////////////////////////////////////////////////////////
 
-  // event for all
-  interface lIntrinsicElementsProps {
-    style?: string | StyleProps | {[key:string] : unknown};
-    className?: string | string[] | {[name: string]: boolean};
-    [key:string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  interface IntrinsicElements {
+    [elementName: string]: {
+      style?: string | CssProps;
+      className?: string | string[] | {[name: string]: boolean};
+      [key:string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
-
-  // エレメントの定義
-  interface IntrinsicElements {
-    [elementName: string]: lIntrinsicElementsProps;
-  }
-
 }

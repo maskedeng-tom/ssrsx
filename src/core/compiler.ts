@@ -5,7 +5,7 @@ const logError = debug('ssrsx:error');
 import path from 'path';
 import childProcess from 'child_process';
 import { readdirSyncRecursively } from '../lib/readdirSyncRecursively';
-import { TscOption } from '../types/TscOption';
+import { TscOption } from '../index';
 
 ////////////////////////////////////////////////////////////////////////////////
 

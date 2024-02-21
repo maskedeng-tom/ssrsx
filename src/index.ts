@@ -1,25 +1,27 @@
+import Koa from 'koa';
+import express from 'express';
+//
 import debug from 'debug';
 const log = debug('ssrsx');
 const logError = debug('ssrsx:error');
 import fs from 'fs';
 import path from 'path';
-import Koa from 'koa';
 import { Server } from 'ws';
 import { initializeParse, events } from './core/eventSupport';
 import { getRequireJs, getLoadEventsJs } from './core/getJs';
 import { getDir } from './lib/getDir';
-import { TscOption } from './types/TscOption';
 import { createCompiler } from './core/compiler';
-import { moduleLoader } from './core/moduleLoader';
 import { errorConsole } from './lib/errorConsole';
 import { initializeStyles, getStyles } from './core/cssSupport';
+import { parse } from '../jsx/jsx-parser';
+import { VirtualElement } from 'jsx/jsx-runtime';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-interface SsrsxOptions<T = unknown> {
+interface SsrsxOptions<USER_CONTEXT = unknown> {
   development?: boolean;
   workRoot?: string;
-  serverRoot?: string;
+  //serverRoot?: string;
   clientRoot?: string;
   //
   requireJsRoot?: string;
@@ -27,15 +29,44 @@ interface SsrsxOptions<T = unknown> {
   //
   cacheControlMaxAge?: number;
   //
-  context?: (ctx: Koa.Context) => T;
-  router?: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => boolean;
+  context?: (ctx: Koa.Context) => USER_CONTEXT;
+  filter?: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => boolean;
+  app?: VirtualElement;
   // for development
   sourceMap?: boolean;
   hotReload?: number | boolean;
   hotReloadWait?: number;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 const HotReloadDefault = 33730;
+
+////////////////////////////////////////////////////////////////////////////////
+
+interface TscOption {
+  target: string,
+  module: string,
+  inlineSourceMap: boolean,
+  outDir: string,
+  removeComments: boolean,
+  esModuleInterop: boolean,
+  forceConsistentCasingInFileNames: boolean,
+  strict: boolean,
+  skipLibCheck: boolean;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+interface KoaProps {
+  ctx: Koa.Context;
+  next: Koa.Next;
+}
+
+interface ExpressProps {
+  req: express.Request;
+  res: express.Response;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -61,45 +92,32 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
 
   const workRoot = getDir(option?.workRoot, './.ssrsx');
   const requireJsRoot = getDir(option?.requireJsRoot, './src/requireJs');
-  const serverRoot = getDir(option?.serverRoot, './src/server');
+  //const serverRoot = getDir(option?.serverRoot, './src/server');
   const clientRoot = getDir(option?.clientRoot, './src/client');
   const clientOffset = clientRoot.replace(process.cwd(), '');
   log('workRoot:', workRoot);
   log('requireJsRoot:', requireJsRoot);
-  log('serverRoot:', serverRoot);
+  //log('serverRoot:', serverRoot);
   log('clientRoot:', clientRoot);
   log('clientOffset:', clientOffset);
   log('-----------------------------------------------');
 
   //////////////////////////////////////////////////////////////////////////////
+  // for hot reload
 
-  const requireJsOptions = {
-    baseUrl: ssrsxBaseUrl,
-    urlArgs: 't=' + bust,
-    paths: option?.requireJsPaths,
-  };
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  const tscOptions: TscOption = {
-    target: 'ES6',
-    module: 'umd',
-    inlineSourceMap: option?.sourceMap ?? false,
-    outDir: workRoot,
-    removeComments: true,
-    esModuleInterop: true,
-    forceConsistentCasingInFileNames: true,
-    strict: true,
-    skipLibCheck: true
-  };
+  if(option?.hotReload){
+    const port = (typeof option.hotReload === 'boolean')? HotReloadDefault: option.hotReload;
+    log('Hot reload start:', port);
+    new Server({ port });
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   // source map handler
 
-  const sourceMapHandler = (ctx: Koa.Context, _next: Koa.Next): boolean => {
+  const sourceMapHandler = (ctx: Koa.Context): boolean => {
     const url = ctx.URL.pathname;
 
-    if(!tscOptions.inlineSourceMap){
+    if(!option?.sourceMap){
       return false;
     }
     if(url.slice(-3) === '.js' || url.indexOf(clientOffset) < 0){
@@ -120,7 +138,19 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
 
   const compiler = createCompiler();
 
-  const ssrsxHandler = async (ctx: Koa.Context, next: Koa.Next): Promise<boolean> => {
+  const ssrsxHandler = async (ctx: Koa.Context): Promise<boolean> => {
+
+    const tscOptions: TscOption = {
+      target: 'ES6',
+      module: 'umd',
+      inlineSourceMap: option?.sourceMap ?? false,
+      outDir: workRoot,
+      removeComments: true,
+      esModuleInterop: true,
+      forceConsistentCasingInFileNames: true,
+      strict: true,
+      skipLibCheck: true
+    };
 
     // compile
     await compiler.compile(clientRoot, workRoot, tscOptions);
@@ -129,7 +159,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     const url = ctx.URL.pathname;
 
     // source map request
-    if(sourceMapHandler(ctx, next)){
+    if(sourceMapHandler(ctx)){
       return false;
     }
 
@@ -179,88 +209,24 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
   };
 
   //////////////////////////////////////////////////////////////////////////////
-  // for hot reload
 
-  if(option?.hotReload){
-    new Server({ port: (typeof option.hotReload === 'boolean')? HotReloadDefault: option.hotReload});
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  const loadModule = moduleLoader();
-
-  return async (ctx: Koa.Context, next: Koa.Next) => {
-
-    // ssrsx handler
-    if(await ssrsxHandler(ctx, next)){
-      return;
-    }
-
-    // target pathname
-    const url = ctx.URL.pathname;
-
-    // page target
-    let fileName = (!url || url === '/')?'/index':url;
-    const localPath = path.join(serverRoot, url);
-    if(url.slice(-1) === '/' || (fs.existsSync(localPath) && fs.lstatSync(localPath).isDirectory())){
-      fileName = path.join(url, 'index');
-    }
-
-    // output filepath
-    let targetPath = path.join(serverRoot, `${fileName}.tsx`);
-    if(!fs.existsSync(targetPath)){
-      targetPath = path.join(serverRoot, `${fileName}.ts`);
-      if(!fs.existsSync(targetPath)){
-        await next();
-        return;
-      }
-    }
-    const targetOffsetPath = targetPath.slice(serverRoot.length + 1);
-
-    // userContext
-    const userContext = option?.context? option.context(ctx): undefined;
-
-    // filter
-    const router = option?.router? option.router(ctx, next, userContext): undefined;
-    if(router === false){
-      return;
-    }
-
-    // load module
-    const mod = await loadModule(targetPath);
-    if(!mod){
-      logError('Module load error:', targetOffsetPath);
-      await next();
-      return;
-    }
-    // run module
-    try{
-      // initialize styles
-      initializeStyles();
-      // initialize parse
-      initializeParse();
-      // run module
-      await mod(ctx, next, userContext);
-    }catch(e){
-      logError('Module error:', targetOffsetPath, e);
-      await next();
-      return;
-    }
-
-    // output
-    ctx.status = ctx.status || 200;
-    log(ctx.method, ctx.status, ctx.url, targetOffsetPath);
-
-    // body
-    let body = String(ctx.body);
-
+  const addStyles = (body: string) => {
     // add styles
     const addStyle = `<style>${getStyles()}</style>`;
     // find /head
     const headCloseTag = /<(\s*)\/(\s*)head(\s*)>/i;
     // insert style
-    body = `${String(body).replace(headCloseTag, `${addStyle}</head>`)}`;
+    return `${String(body).replace(headCloseTag, `${addStyle}</head>`)}`;
+  };
 
+  //////////////////////////////////////////////////////////////////////////////
+
+  const addScripts = (body: string) => {
+    const requireJsOptions = {
+      baseUrl: ssrsxBaseUrl,
+      urlArgs: 't=' + bust,
+      paths: option?.requireJsPaths,
+    };
     // add scripts
     const addScript = `<script type="text/javascript" src="${ssrsxBaseUrl}${requireJs}"></script>
     <script type="text/javascript">
@@ -271,16 +237,52 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     const bodyCloseTag = /<(\s*)\/(\s*)body(\s*)>/i;
     // body tag not found
     if(bodyCloseTag.test(body) === false){
-      body = `<!DOCTYPE html>${body}${addScript}<script>${errorConsole('body tag not found', targetOffsetPath)}</script>`;
+      return `<!DOCTYPE html>${body}${addScript}<script>${errorConsole('body tag not found', 'by ROUTER')}</script>`;
+    }
+    // insert script
+    return `<!DOCTYPE html>${String(body).replace(bodyCloseTag, `${addScript}</body>`)}`;
+  };
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  return async (ctx: Koa.Context, next: Koa.Next) => {
+
+    // ssrsx handler
+    if(await ssrsxHandler(ctx)){
       return;
     }
 
-    // insert script
-    ctx.body = `<!DOCTYPE html>${String(body).replace(bodyCloseTag, `${addScript}</body>`)}`;
+    // userContext
+    const userContext = option?.context? option.context(ctx): undefined;
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    // initialize styles
+    initializeStyles();
+    // initialize parse
+    initializeParse();
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    // app root
+    const app = option?.app? option?.app : undefined;
+    if(app){
+      const koa: KoaProps = { ctx, next };
+      // output
+      ctx.status = (ctx.status === 404)?200:ctx.status;
+      ctx.body = addScripts(addStyles(await parse(app, {koa}, userContext)));
+      log(ctx.method, ctx.status, ctx.url);
+      return;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
 
   };
 
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
 export default ssrsx;
-export { SsrsxOptions };
+export { TscOption, SsrsxOptions };
+export { KoaProps, ExpressProps };

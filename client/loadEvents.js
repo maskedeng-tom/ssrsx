@@ -20,6 +20,7 @@ addEventListener('load', function load(){
   if(ssrsxHotReload){
     const loc = location.hostname;
     const sock = new WebSocket('ws://' + loc + ':' + ssrsxHotReload);
+    console.log('Wait for Hot reload !!', sock);
     sock.addEventListener('close', e => {e; setTimeout(() => {location.reload();}, ssrsxHotReloadWait);});
   }
 });

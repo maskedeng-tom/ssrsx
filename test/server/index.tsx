@@ -1,21 +1,28 @@
-import Koa from 'koa';
+//import Koa from 'koa';
 import { setStyle } from '../../index';
-import { getLoginUser } from './lib/session';
-import { Html } from './components/Html';
-import { Head } from './components/Head';
+import { KoaProps, SsrsxOptions } from '../../src';
+//import { getLoginUser } from './lib/session';
+//import { Html } from './components/Html';
+//import { Head } from './components/Head';
+import { UserContext } from '../index';
 
 interface LoginInfo {
   username: string;
   password: string;
 }
 
-const handler = (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => {
+const Index = ({koa, ssrsx}: {ssrsx?: SsrsxOptions<UserContext>, koa?: KoaProps}) => {
 
+  //console.log('--------=>', koa);
+  //console.log('--------=>', ssrsx);
+
+  /*
   const user = getLoginUser(ctx);
   if(user?.username){
     ctx.redirect('/app');
     return;
   }
+  */
 
   setStyle({
     'html': {
@@ -54,31 +61,29 @@ const handler = (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => {
     },
   });
 
-  ctx.body = <>
-    <Html header={<Head title='Login'/>}>
-      <div className="container">
-        <div className="login-form">
-          <div style={{textAlign: 'center'}}>Login</div>
-          <form method="post" action="/login">
-            <div>
-              <label>Username:
-                <input type="text" name="username" onInput="index.onInputUsername"/>
-              </label>
-            </div>
-            <div>
-              <label>Password:
-                <input type="password" name="password" onInput="index.onInputPassword"/>
-              </label>
-            </div>
-            <div>
-              <input type="submit" name="login" value="login" />
-            </div>
-          </form>
-        </div>
+  return <>
+    <div className="container">
+      <div className="login-form">
+        <div style={{textAlign: 'center'}}>Login</div>
+        <form method="post" action="/login">
+          <div>
+            <label>Username:
+              <input type="text" name="username" onInput="index.onInputUsername"/>
+            </label>
+          </div>
+          <div>
+            <label>Password:
+              <input type="password" name="password" onInput="index.onInputPassword"/>
+            </label>
+          </div>
+          <div>
+            <input type="submit" name="login" value="login" />
+          </div>
+        </form>
       </div>
-    </Html>
+    </div>
   </>;
 };
 
-export default handler;
+export default Index;
 export type { LoginInfo };

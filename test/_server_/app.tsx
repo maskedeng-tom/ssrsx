@@ -18,7 +18,7 @@ const handler = (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => {
     }
   });
 
-  ctx.body = <>
+  return <>
     <Html header={<Head title='App'/>}>
       <div {...scope}>
         APP - {user?.username}

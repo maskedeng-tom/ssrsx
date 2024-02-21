@@ -245,8 +245,11 @@ const ignorePixelStyle = [
   'gridRowStart',
 ];
 
-
 // スタイル 定義
 type SassStyles = CSSStyle | {[key:string]: SassStyles | string | number | undefined | null | (string | number)[]};
 
-export { type CSSStyle, type SassStyles, ignorePixelStyle };
+// スタイル 定義
+type CssProps = CSSStyle & {[key:string]: string | number | undefined | null | (string | number)[]};
+type SassStyleProps = CSSStyle | {[key:string]: SassStyleProps | string | number | undefined | null | (string | number)[]};
+
+export { CSSStyle, SassStyles, CssProps, SassStyleProps, ignorePixelStyle };

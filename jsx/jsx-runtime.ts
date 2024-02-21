@@ -1,107 +1,75 @@
-import { FunctionComponent, Props, VirtualChildren } from '../src/types/types';
-import { createUid, events } from '../src/core/eventSupport';
-import { styleToString } from '../src/styleToString/styleToString';
-import { SassStyles } from '../src/styleToString/cssTypes';
+////////////////////////////////////////////////////////////////////////////////
+
+// 仮想Element定義
+interface VirtualElement_ {
+  tag?: string;
+  f?: FunctionComponent;
+  fragment?: boolean;
+  props?: Props;
+  attributes?: {[key:string]: unknown};
+  key?: string | number;
+  children?: VirtualChildren;
+}
+
+type VirtualElement = VirtualElement_ | Promise<VirtualElement_>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const parseChildren = (children?: VirtualChildren): string => {
-  if(Array.isArray(children)) {
-    return children.join('');
-  }
-  if(!children){
-    return '';
-  }
-  return String(children);
-};
+// text node
+type VirtualTextNode = string | number | boolean | Date | object;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const parseAttributes = (props: Props | null): string => {
-  //
-  const uid = createUid();
-  //
-  let needUid = false;
-  const result: string[] = [];
-  for(const key in props){
-    //
-    if(key.slice(0, 2) === 'on'){
-      //
-      const target = uid;
-      const event = key.slice(2).toLowerCase();
-      const [module, f] = String(props[key]).split('.');
-      //
-      events.push({target, event, module, f: f ?? key});
-      needUid = true;
-      //
-      continue;
-    }
-    //
-    if(key === 'className'){
-      result.push(`class="${String(props[key])}"`);
-      continue;
-    }
-    if(key === 'htmlFor'){
-      result.push(`for="${String(props[key])}"`);
-      continue;
-    }
-    if(key === 'style'){
-      result.push(`style="${typeof props[key] === 'string' ?
-        String(props[key])
-        :
-        (typeof props[key] === 'object' ?
-          styleToString(props[key] as SassStyles)
-          :
-          ''
-        )
-      }"`);
-      continue;
-    }
-    //
-    result.push(`${key}="${String(props[key])}"`);
-  }
-  if(result.length === 0){
-    return '';
-  }
-  if(needUid){
-    result.push(`data-ssrsx-event="${uid}"`);
-  }
-  return ` ${result.join(' ')}`;
+// 仮想子ノード
+type VirtualChildNode = VirtualElement | VirtualTextNode | null | undefined;
+type VirtualChildNodes = VirtualChildNode[];
+type VirtualChildren = VirtualChildNodes | VirtualChildNode;
+
+////////////////////////////////////////////////////////////////////////////////
+
+// 関数コンポーネント引数
+type Props = {
+  children?: VirtualChildren;
+  [key:string]: unknown;
 };
+
+// 関数コンポーネント 定義
+type FunctionComponent<T = Props | null | undefined> = (props: T) => VirtualElement;
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const jsx = (
   tag: string | FunctionComponent,
-  props: Props | null,
+  props: Props | undefined,
   _key?: string | number,
-): string => {
-  const {children, ...rest} = props || {};
+): VirtualElement => {
+  const {children, ...attributes} = props || {};
   if (typeof tag === 'function') {
-    return tag(props);
+    return {f: tag, props};
   }
-  return `<${tag}${parseAttributes(rest)}>${parseChildren(children)}</${tag}>`;
+  return {tag, attributes, children};
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const jsxs = (
   tag: string | FunctionComponent,
-  props: Props | null,
+  props: Props | undefined,
   key?: string | number,
-): string => {
+): VirtualElement => {
   return jsx(tag, props, key);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const Fragment = (
-  props: Props | null,
-): string => {
-  const {children/*, key, ...rest*/} = props || {};
-  return parseChildren(children);
+  props: Props | undefined,
+): VirtualElement => {
+  const {children, key, ..._rest} = props || {};
+  return {fragment: true, children, key: key as string | number};
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { jsx, jsxs, Fragment };
+export { VirtualElement, VirtualChildren };
