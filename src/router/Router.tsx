@@ -1,10 +1,11 @@
-import { SsrsxContext } from '../../jsx/jsx-parser';
+import { getCurrentSsrsx, getParseContext } from '../../index';
+import { VirtualChildren } from 'jsx/jsx-runtime';
+import { addFirstSlash, addLastSlash } from './lib/addSlash';
 
 ////////////////////////////////////////////////////////////////////////////////
 
 interface RouterContext {
   basename: string;
-  //matched: string[];
   matched: string;
   routes?: {
     resolved?: boolean;
@@ -13,26 +14,20 @@ interface RouterContext {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const Router = ({
-  basename, children, ssrsx
-}:{
-  basename?: string,
-  children?: JSX.Children,
-  ssrsx?: SsrsxContext<unknown, RouterContext>,
-}) => {
-  if(!ssrsx?.parseContext){
-    throw new Error('ssrsx.parseContext is not defined');
-  }
+const Router = ({/*basename, */children}:{/*basename?: string, */children?: VirtualChildren}) => {
+  //
+  const ssrsx = getCurrentSsrsx();
+  const baseUrl = ssrsx?.baseUrl ?? '';
+
+  console.log('===>', baseUrl, '<===');
+
+  //
+  const parseContext = getParseContext<RouterContext>();
 
   // set parse context
-  ssrsx.parseContext = {
-    basename: basename ?? '/',
-    matched: '',
-    routes: {},
-  };
-
-  // set basename
-  ssrsx.parseContext.matched = ssrsx.parseContext.basename;
+  parseContext.basename = addFirstSlash(addLastSlash(baseUrl));
+  parseContext.matched = parseContext.basename;//'';
+  parseContext.routes = {};
 
   // output
   return <>{children}</>;
@@ -41,4 +36,5 @@ const Router = ({
 ////////////////////////////////////////////////////////////////////////////////
 
 export default Router;
-export { Router, RouterContext };
+export { Router };
+export type { RouterContext };

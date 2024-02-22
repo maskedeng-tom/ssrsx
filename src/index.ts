@@ -1,5 +1,6 @@
 import Koa from 'koa';
 import express from 'express';
+import mime from 'mime-types';
 //
 import debug from 'debug';
 const log = debug('ssrsx');
@@ -14,33 +15,8 @@ import { createCompiler } from './core/compiler';
 import { errorConsole } from './lib/errorConsole';
 import { initializeStyles, getStyles } from './core/cssSupport';
 import { parse } from '../jsx/jsx-parser';
-import { VirtualElement } from 'jsx/jsx-runtime';
-
-////////////////////////////////////////////////////////////////////////////////
-
-interface SsrsxOptions<USER_CONTEXT = unknown> {
-  development?: boolean;
-  workRoot?: string;
-  //serverRoot?: string;
-  clientRoot?: string;
-  //
-  requireJsRoot?: string;
-  requireJsPaths?: { [key: string]: string };
-  //
-  cacheControlMaxAge?: number;
-  //
-  context?: (ctx: Koa.Context) => USER_CONTEXT;
-  filter?: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => boolean;
-  app?: VirtualElement;
-  // for development
-  sourceMap?: boolean;
-  hotReload?: number | boolean;
-  hotReloadWait?: number;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-const HotReloadDefault = 33730;
+import { SsrsxOptions, HttpServer } from './types';
+import { addFirstSlash, removeLastSlash } from './router/lib/addSlash';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -58,15 +34,7 @@ interface TscOption {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-interface KoaProps {
-  ctx: Koa.Context;
-  next: Koa.Next;
-}
-
-interface ExpressProps {
-  req: express.Request;
-  res: express.Response;
-}
+const HotReloadDefault = 33730;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -86,20 +54,21 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
 
   const bust = (new Date()).getTime();
   const ssrsxBaseUrl = '/ssrsx-client-script/';
-  const requireJs = `event-loader-${bust}.js`;
+  const requireJs = `requireJs-${bust}.js`;
+  const eventLoaderJs = `event-loader-${bust}.js`;
 
   //////////////////////////////////////////////////////////////////////////////
 
   const workRoot = getDir(option?.workRoot, './.ssrsx');
-  const requireJsRoot = getDir(option?.requireJsRoot, './src/requireJs');
-  //const serverRoot = getDir(option?.serverRoot, './src/server');
   const clientRoot = getDir(option?.clientRoot, './src/client');
   const clientOffset = clientRoot.replace(process.cwd(), '');
+  const requireJsRoot = getDir(option?.requireJsRoot, clientRoot);
+  const baseUrl = removeLastSlash(addFirstSlash(option?.baseUrl ?? ''));
   log('workRoot:', workRoot);
   log('requireJsRoot:', requireJsRoot);
-  //log('serverRoot:', serverRoot);
   log('clientRoot:', clientRoot);
   log('clientOffset:', clientOffset);
+  log('baseUrl:', baseUrl);
   log('-----------------------------------------------');
 
   //////////////////////////////////////////////////////////////////////////////
@@ -129,6 +98,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     }
 
     ctx.status = 200;
+    console.log('------------------------1---------------------', targetMapPath);
     ctx.body = fs.readFileSync(targetMapPath).toString();
     log(ctx.method, ctx.status, ctx.url, targetMapPath);
     return true;
@@ -171,6 +141,13 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
 
     // cache
     ctx.status = 200;
+    ctx.type = 'text/javascript';
+    /*
+    const stats = fs.statSync(filepath);
+    ctx.set('ETag', ctx.url);
+    ctx.set('Cache-Control', 'max-age=0');
+    ctx.set('Last-Modified', stats.mtime.toUTCString());
+    */
     ctx.set('ETag', ctx.url);
     ctx.set('Cache-Control', `max-age=${option?.cacheControlMaxAge ?? 60 * 60 * 24}`);
     if(ctx.fresh){
@@ -181,7 +158,26 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
 
     // require.js
     if(targetUrl === requireJs){
-      ctx.body = getRequireJs() + getLoadEventsJs();
+      ctx.body = `${getRequireJs()}`;
+      log(ctx.method, ctx.status, ctx.url, targetUrl);
+      return true;
+    }
+
+    // require.js
+    if(targetUrl === eventLoaderJs){
+      const requireJsOptions = {
+        baseUrl: ssrsxBaseUrl,
+        urlArgs: 't=' + bust,
+        paths: option?.requireJsPaths,
+      };
+      ctx.body = `${getLoadEventsJs()}
+var ssrsxOptions = {
+  events: ${JSON.stringify(events)},
+  hotReload: ${option?.hotReload? HotReloadDefault: false},
+  hotReloadWait: ${option?.hotReloadWait ?? 1000},
+  requireJsConfig: ${JSON.stringify(requireJsOptions)},
+}
+`;
       log(ctx.method, ctx.status, ctx.url, targetUrl);
       return true;
     }
@@ -197,6 +193,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     // requireJsRoot
     const requireJsFile = path.join(requireJsRoot, targetUrl);
     if(fs.existsSync(requireJsFile)){
+      console.log('------------------------2---------------------', requireJsFile);
       ctx.body = fs.readFileSync(requireJsFile).toString();
       log(ctx.method, ctx.status, ctx.url, targetUrl);
       return true;
@@ -222,17 +219,11 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
   //////////////////////////////////////////////////////////////////////////////
 
   const addScripts = (body: string) => {
-    const requireJsOptions = {
-      baseUrl: ssrsxBaseUrl,
-      urlArgs: 't=' + bust,
-      paths: option?.requireJsPaths,
-    };
     // add scripts
-    const addScript = `<script type="text/javascript" src="${ssrsxBaseUrl}${requireJs}"></script>
-    <script type="text/javascript">
-    var ssrsxHotReload=${option?.hotReload? HotReloadDefault: false};
-    var ssrsxHotReloadWait=${option?.hotReloadWait ?? 1000};
-    var ssrsxEvents=${JSON.stringify(events)};require.config(${JSON.stringify(requireJsOptions)});</script>`;
+    const addScript = `
+    <script src="${ssrsxBaseUrl}${requireJs}"></script>
+    <script src="${ssrsxBaseUrl}${eventLoaderJs}"></script>
+    `;
     // find /body
     const bodyCloseTag = /<(\s*)\/(\s*)body(\s*)>/i;
     // body tag not found
@@ -251,6 +242,36 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     if(await ssrsxHandler(ctx)){
       return;
     }
+    /*
+    console.log('==>', ctx.URL.pathname);
+    console.log('==x>', ctx.URL.pathname.replace(baseUrl, ''));
+    console.log('==>', baseUrl);
+    */
+
+    // static file route
+    const filepath = path.join(clientRoot, ctx.URL.pathname.replace(baseUrl, ''));
+    if(fs.existsSync(filepath) && !fs.lstatSync(filepath).isDirectory()){
+
+      ctx.status = 200;
+      const mimeType = mime.lookup(path.extname(filepath).slice(1));
+      ctx.type = mimeType || 'text/plain';
+
+      const stats = fs.statSync(filepath);
+      ctx.set('ETag', ctx.url);
+      ctx.set('Cache-Control', 'max-age=0');
+      ctx.set('Last-Modified', stats.mtime.toUTCString());
+
+      if(ctx.fresh){
+        ctx.status = 304;
+        log(ctx.method, ctx.status, ctx.url);
+        return true;
+      }
+
+      console.log('------------------------3---------------------', filepath);
+      ctx.body = fs.readFileSync(filepath);
+      log(ctx.method, ctx.status, ctx.url, filepath);
+      return;
+    }
 
     // userContext
     const userContext = option?.context? option.context(ctx): undefined;
@@ -267,22 +288,19 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     // app root
     const app = option?.app? option?.app : undefined;
     if(app){
-      const koa: KoaProps = { ctx, next };
-      // output
+      const server: HttpServer = {koa: {ctx, next}};
       ctx.status = (ctx.status === 404)?200:ctx.status;
-      ctx.body = addScripts(addStyles(await parse(app, {koa}, userContext)));
+      ctx.body = addScripts(addStyles(await parse(app, server, userContext, baseUrl)));
+      ctx.type = 'text/html';
       log(ctx.method, ctx.status, ctx.url);
       return;
     }
 
     ////////////////////////////////////////////////////////////////////////////
-
   };
-
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export default ssrsx;
-export { TscOption, SsrsxOptions };
-export { KoaProps, ExpressProps };
+export type { TscOption };

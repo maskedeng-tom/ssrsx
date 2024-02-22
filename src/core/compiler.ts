@@ -70,6 +70,7 @@ const createCompiler = () => {
       }else{
         log(`Compiled: ${file}`);
         if(fs.existsSync(outputFileName)){
+          console.log('------------------------4---------------------', outputFileName);
           const js = fs.readFileSync(outputFileName).toString();
           if(js){
             jsCache[file.split('.').slice(0, -1).join('.') + '.js'] = js;

@@ -1,29 +1,28 @@
-import { SsrsxContext, SsrsxFunctions } from '../../jsx/jsx-parser';
+import { VirtualChildren } from 'jsx/jsx-runtime';
+import { SsrsxFunctions } from '../../jsx/jsx-parser';
 import { RouterContext } from './Router';
+import { getParseContext } from '../../index';
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const Routes = ({
-  children, ssrsx, _ssrsxFunctions
+  children, _ssrsxFunctions
 }:{
-  children?: JSX.Children,
-  ssrsx?: SsrsxContext<unknown, RouterContext>,
+  children?: VirtualChildren,
   _ssrsxFunctions?: SsrsxFunctions
 }) => {
-  if(!ssrsx?.parseContext){
-    throw new Error('ssrsx.parseContext is not defined');
-  }
+  const parseContext = getParseContext<RouterContext>();
 
   // backup context
-  const backupRoutesContext = {...ssrsx.parseContext.routes};
+  const backupRoutesContext = {...parseContext.routes};
   // set context
-  ssrsx.parseContext.routes = {};
+  parseContext.routes = {};
 
   // output
   const result = <>{children}</>;
   if(_ssrsxFunctions){
     _ssrsxFunctions.finalize = () => {
-      ssrsx.parseContext.routes = backupRoutesContext;
+      parseContext.routes = backupRoutesContext;
     };
   }
   return result;

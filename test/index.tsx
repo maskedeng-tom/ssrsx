@@ -1,75 +1,23 @@
 import Koa from 'koa';
 import koaStatic from 'koa-static';
 import session from 'koa-session';
-//import ssrsx from '@maskedeng-tom/ssrsx';
-import ssrsx, { ExpressProps, KoaProps } from '../src/';
 import bodyParser from 'koa-bodyparser';
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-import { Router } from '../src/router/Router';
-import { Routes } from '../src/router/Routes';
-import { Route } from '../src/router/Route';
-
-import Index from './server/Index';
+import helmet from 'koa-helmet';
+//import ssrsx from '@maskedeng-tom/ssrsx';
+import ssrsx from '../src/';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-interface UserContext {
-  db: string;
-}
+import AppRouter, { UserContext } from './server/AppRouter';
 
-export { UserContext };
-
-const App = () => {
-  //
-  return <>
-    <Router /*basename='/tt'*/>
-      <html lang="ja">
-        <head>
-          <meta charset="utf-8"/>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        </head>
-        <body>
-          <div>
-            <Routes>
-              <Route path="ss">
-                <div>-ss-</div>
-                <Route path=":zz/yy">
-                  <div>-zz-</div>
-                  <Route path="/">
-                    <div>zz/</div>
-                  </Route>
-                  <Route path="xx">
-                    <div>xx</div>
-                  </Route>
-                </Route>
-
-                <Route path="tt">
-                  <div>tt</div>
-                </Route>
-              </Route>
-              <Route path="*">
-                <div>ALL</div>
-              </Route>
-            </Routes>
-          </div>
-        </body>
-      </html>
-    </Router>
-  </>;
-  //
-};
-
+////////////////////////////////////////////////////////////////////////////////
 
 const startServer = () => {
 
   const app = new Koa();
 
   app.keys = ['f6fba634-dedb-9d6c-c1de-acd2196e3786'];
-  const CONFIG = {
+  const sessionConfig = {
     key: 'ssrsx.session', /** (string) cookie key (default is koa.sess) */
     /** (number || 'session') maxAge in ms (default is 1 days) */
     /** 'session' will result in a cookie that expires when session/browser is closed */
@@ -84,14 +32,33 @@ const startServer = () => {
     //secure: true, /** (boolean) secure cookie*/
     //sameSite: null, /** (string) session cookie sameSite options (default null, don't set it) */
   };
-  app.use(session(CONFIG, app));
+  app.use(session(sessionConfig, app));
   app.use(bodyParser());
 
+
+  app.use(async (ctx, next) => {
+    await next();
+    //ctx.set('Cache-Control', 'no-store');
+    //ctx.set('Pragma', 'no-cache');
+    ctx.res.removeHeader('x-powered-by');
+  });
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // CSP
+  ////////////////////////////////////////////////////////////////////////////////
+
+  app.use(helmet());
+  app.use(helmet.contentSecurityPolicy({ directives: {
+    defaultSrc: ['\'self\'','ws'],
+    connectSrc: ['\'self\'','ws://*:*'],
+  } }));
+
   app.use(ssrsx({
+    baseUrl: '/a',
     development: true,
-    //hotReload: 5001,
-    requireJsRoot: 'test/requireJs',
+    //hotReload: 33730,
     clientRoot: 'test/client',
+    requireJsRoot: 'test/client',
     requireJsPaths: {
       //'jquery': 'https://code.jquery.com/jquery-3.7.1.min',
       'jquery': 'jquery.min',
@@ -101,10 +68,10 @@ const startServer = () => {
         db: 'DB',
       };
     },
-    app: <App/>
+    app: <AppRouter/>
   }));
 
-  app.use(koaStatic('test/server'));
+  app.use(koaStatic('test/assets'));
 
   app.listen(3000);
 

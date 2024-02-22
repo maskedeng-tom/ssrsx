@@ -2,7 +2,11 @@ import { SassStyles } from '../styleToString/cssTypes';
 import { styleToString } from '../styleToString/styleToString';
 import { shortId } from '../lib/shortId';
 
+////////////////////////////////////////////////////////////////////////////////
+
 let styles: string[] = [];
+
+////////////////////////////////////////////////////////////////////////////////
 
 const initializeStyles = () => {
   styles = [];
@@ -21,5 +25,7 @@ const setScopedStyle = (sass: SassStyles) => {
 const getStyles = () => {
   return styles.join('\n');
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 export { initializeStyles, setStyle, setScopedStyle, getStyles, styleToString };

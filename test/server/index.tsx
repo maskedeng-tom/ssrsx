@@ -1,54 +1,21 @@
-//import Koa from 'koa';
-import { setStyle } from '../../index';
-import { KoaProps, SsrsxOptions } from '../../src';
-//import { getLoginUser } from './lib/session';
-//import { Html } from './components/Html';
-//import { Head } from './components/Head';
-import { UserContext } from '../index';
+import { setStyle, Redirect, routerPath, getKoa } from '../../index';
+import { getLoginUser } from './session';
+import { UserContext } from './AppRouter';
 
 interface LoginInfo {
   username: string;
   password: string;
 }
 
-const Index = ({koa, ssrsx}: {ssrsx?: SsrsxOptions<UserContext>, koa?: KoaProps}) => {
+const Index = () => {
+  const koa = getKoa();
 
-  //console.log('--------=>', koa);
-  //console.log('--------=>', ssrsx);
-
-  /*
-  const user = getLoginUser(ctx);
+  const user = getLoginUser(koa.ctx);
   if(user?.username){
-    ctx.redirect('/app');
-    return;
+    return <Redirect to="/app"/>;
   }
-  */
 
   setStyle({
-    'html': {
-      width: '100%',
-      height: '100%',
-    },
-    'body': {
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#f0f0f0',
-      boxSizing: 'border-box',
-      margin: 0,
-      padding: 0,
-      '*' : {
-        boxSizing: 'border-box',
-        margin: 0,
-        padding: 0,
-      }
-    },
-    '.container': {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: '100%',
-      height: '100%',
-    },
     '.login-form': {
       width: 300,
       padding: 20,
@@ -62,25 +29,23 @@ const Index = ({koa, ssrsx}: {ssrsx?: SsrsxOptions<UserContext>, koa?: KoaProps}
   });
 
   return <>
-    <div className="container">
-      <div className="login-form">
-        <div style={{textAlign: 'center'}}>Login</div>
-        <form method="post" action="/login">
-          <div>
-            <label>Username:
-              <input type="text" name="username" onInput="index.onInputUsername"/>
-            </label>
-          </div>
-          <div>
-            <label>Password:
-              <input type="password" name="password" onInput="index.onInputPassword"/>
-            </label>
-          </div>
-          <div>
-            <input type="submit" name="login" value="login" />
-          </div>
-        </form>
-      </div>
+    <div className="login-form">
+      <div style={{textAlign: 'center'}}>Login</div>
+      <form method="post" action={routerPath('/login')}>
+        <div>
+          <label>Username:
+            <input type="text" name="username" onInput="index.onInputUsername"/>
+          </label>
+        </div>
+        <div>
+          <label>Password:
+            <input type="password" name="password" onInput="index.onInputPassword"/>
+          </label>
+        </div>
+        <div>
+          <input type="submit" name="login" value="login" />
+        </div>
+      </form>
     </div>
   </>;
 };

@@ -41,4 +41,4 @@ const logoutUser = (ctx: Koa.Context) => {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { /*session, SessionData, */getLoginUser, loginUser, logoutUser };
+export { getLoginUser, loginUser, logoutUser };

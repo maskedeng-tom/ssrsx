@@ -18,7 +18,7 @@ const createParams = (keys: PathToRegExp.Key[], match: RegExpExecArray) => {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const matchPath = (matchPath: string, url: string, option: {strict?: boolean, sensitive?: boolean}) => {
+const matchPath = (matchPath: string, url: string, option: {sensitive?: boolean}) => {
 
   // match
   const keys: PathToRegExp.Key[] = [];

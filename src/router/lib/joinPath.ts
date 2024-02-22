@@ -1,17 +1,20 @@
-import { addLastSlash } from './addLastSlash';
+import { addLastSlash, removeFirstSlash } from './addSlash';
+
+////////////////////////////////////////////////////////////////////////////////
 
 const joinPath = (...paths: string[]) => {
   return paths.map((path, i) => {
     if(i === 0){
       return addLastSlash(path);
     }
-    const append = path.slice(0, 1) === '/' ? path.slice(1) : path;
     if(i === paths.length - 1){
-      return append;
+      return removeFirstSlash(path);
     }else{
-      return addLastSlash(append);
+      return removeFirstSlash(addLastSlash(path));
     }
   }).join('');
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 export { joinPath };

@@ -2,7 +2,7 @@ import { createUid, events } from '../src/core/eventSupport';
 import { styleToString } from '../src/styleToString/styleToString';
 import { SassStyles } from '../src/styleToString/cssTypes';
 import { Fragment, VirtualElement, VirtualChildren } from './jsx-runtime';
-//import { KoaProps, ExpressProps } from '../src';
+import { HttpServer } from '../src/types';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -66,8 +66,10 @@ const parseAttributes = (attributes?: {[key:string]: unknown}): string | undefin
 ////////////////////////////////////////////////////////////////////////////////
 
 interface SsrsxContext<C = unknown, P = unknown> {
+  baseUrl: string;
   context?: C;
   parseContext: P;
+  server: HttpServer;
 }
 
 interface SsrsxFunctions {
@@ -76,14 +78,21 @@ interface SsrsxFunctions {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const parseCore = async (root: VirtualChildren, ssrsx: SsrsxContext, httpServer: object): Promise<string> => {
+let currentSsrsx: SsrsxContext | undefined = undefined;
 
-  //console.log('=------parseContext---------->', parseContext);
+const getCurrentSsrsx = <C = unknown, P = unknown>(): SsrsxContext<C, P> | undefined => {
+  return currentSsrsx as SsrsxContext<C, P>;
+};
+
+const parseCore = async (root: VirtualChildren): Promise<string> => {
+  if(!root){
+    return '';
+  }
 
   if(Array.isArray(root)){
     const result: string[] = [];
     for(const child of root as VirtualChildren[]){
-      result.push(await parseCore(child, ssrsx, httpServer));
+      result.push(await parseCore(child));
     }
     return result.join('');
   }
@@ -97,50 +106,46 @@ const parseCore = async (root: VirtualChildren, ssrsx: SsrsxContext, httpServer:
 
   const ve = await (root as Promise<VirtualElement>);
   if(ve.fragment){
-    return await parseCore(ve.children, ssrsx, httpServer);
+    return await parseCore(ve.children);
   }
   if(ve.f){
-    /*
-    const ssrsx: SsrsxContext = {
-      context: userContext,
-      parseContext: parseContext,
-      functionComponentContext: {finalize: undefined},
-    };
-    */
     const _ssrsxFunctions: SsrsxFunctions = {finalize: () => {}};
-    const funcResult = await ve.f({ssrsx, _ssrsxFunctions, ...httpServer, ...ve.props});
-    const result = await parseCore(funcResult, ssrsx, httpServer);
-    //parseContext = ssrsx.parseContext;
-    //if(ssrsx.functionComponentContext.finalize){
-    const finalResult = _ssrsxFunctions.finalize?.();
-    if(finalResult){
-      return await parseCore(finalResult, ssrsx, httpServer);
-    }
-    //}
     //
+    let funcResult: VirtualElement | undefined = undefined;
+    try{
+      funcResult = await ve.f({_ssrsxFunctions, ...ve.props});
+    }catch(e){
+      console.error(e); // TODO error report
+    }
+    //
+    const result = await parseCore(funcResult);
+    const finalResult = _ssrsxFunctions.finalize?.();
+    //
+    if(finalResult){
+      return await parseCore(finalResult);
+    }
     return result;
   }
   if(ve.tag){
-    return `<${ve.tag}${parseAttributes(ve.attributes)}>${await parseCore(ve.children, ssrsx, httpServer)}</${ve.tag}>`;
+    return `<${ve.tag}${parseAttributes(ve.attributes)}>${await parseCore(ve.children)}</${ve.tag}>`;
   }
 
   return '';
 };
 
-const parse = async (root: JSX.Children, httpServer: object, userContext: unknown): Promise<string> => {
-  //console.log('★★★★★★★★★★★★★★★★');
+const parse = async (root: JSX.Children, httpServer: HttpServer, userContext: unknown, baseUrl: string): Promise<string> => {
   const ssrsx: SsrsxContext = {
+    baseUrl,
     context: userContext,
     parseContext: {},
-    //functionComponentContext: {finalize: undefined},
+    server: httpServer,
   };
-  //const parseContext = {};
-  const result = await parseCore(root, ssrsx, httpServer);
-  //console.log('★★★★★★★★★★★★★★★★', parseContext);
-  return result;
+  currentSsrsx = ssrsx;
+  return await parseCore(root);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { Fragment, parse };
 export type { SsrsxContext, SsrsxFunctions };
+export { getCurrentSsrsx };

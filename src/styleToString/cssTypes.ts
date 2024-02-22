@@ -252,4 +252,5 @@ type SassStyles = CSSStyle | {[key:string]: SassStyles | string | number | undef
 type CssProps = CSSStyle & {[key:string]: string | number | undefined | null | (string | number)[]};
 type SassStyleProps = CSSStyle | {[key:string]: SassStyleProps | string | number | undefined | null | (string | number)[]};
 
-export { CSSStyle, SassStyles, CssProps, SassStyleProps, ignorePixelStyle };
+export type { CSSStyle, SassStyles, CssProps, SassStyleProps };
+export { ignorePixelStyle };

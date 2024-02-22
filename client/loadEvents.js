@@ -1,8 +1,16 @@
 var require;
-var ssrsxEvents;
-var ssrsxHotReload;
-var ssrsxHotReloadWait;
-addEventListener('load', function load(){
+var ssrsxOptions;
+//
+var ssrsxEventLoaderInitialized = false;
+function ssrsxEventLoaderInitializer(){
+  if(ssrsxEventLoaderInitialized){
+    return;
+  }
+  ssrsxEventLoaderInitialized = true;
+  //
+  //console.log('Initialize ssrsx client');
+  require.config(ssrsxOptions.requireJsConfig);
+  //
   function addEvent(target, ev, mod, f){
     if(!target){return;}
     require([mod], function(funcs) {
@@ -12,15 +20,24 @@ addEventListener('load', function load(){
       target.addEventListener(ev, function(e){funcs[f](e);});
     });
   }
-  for(var i = 0; i < ssrsxEvents.length; i++){
-    var event = ssrsxEvents[i];
+  //
+  for(var i = 0; i < ssrsxOptions.events.length; i++){
+    var event = ssrsxOptions.events[i];
     var target = document.querySelectorAll('[data-ssrsx-event="' + event.target + '"]')[0];
     addEvent(target, event.event, event.module, event.f);
   }
-  if(ssrsxHotReload){
+  //
+  if(ssrsxOptions.hotReload){
     const loc = location.hostname;
-    const sock = new WebSocket('ws://' + loc + ':' + ssrsxHotReload);
+    const sock = new WebSocket('ws://' + loc + ':' + ssrsxOptions.hotReload);
     console.log('Wait for Hot reload !!', sock);
-    sock.addEventListener('close', e => {e; setTimeout(() => {location.reload();}, ssrsxHotReloadWait);});
+    sock.addEventListener('close', e => {e; setTimeout(() => {location.reload();}, ssrsxOptions.hotReloadWait);});
   }
+  //
+}
+addEventListener('load', function load(){
+  ssrsxEventLoaderInitializer();
+});
+addEventListener('readystatechange', function load(){
+  ssrsxEventLoaderInitializer();
 });
