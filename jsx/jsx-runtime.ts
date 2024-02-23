@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 // 仮想Element定義
-interface VirtualElement_ {
+interface VirtualElementCore {
   tag?: string;
   f?: FunctionComponent;
   fragment?: boolean;
@@ -11,7 +11,7 @@ interface VirtualElement_ {
   children?: VirtualChildren;
 }
 
-type VirtualElement = VirtualElement_ | Promise<VirtualElement_>;
+type VirtualElement = VirtualElementCore | Promise<VirtualElementCore>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -72,4 +72,4 @@ const Fragment = (
 ////////////////////////////////////////////////////////////////////////////////
 
 export { jsx, jsxs, Fragment };
-export { VirtualElement_, VirtualElement, VirtualChildren };
+export { VirtualElementCore, VirtualElement, VirtualChildren };
