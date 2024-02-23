@@ -34,7 +34,7 @@
     "debug": "^4.3.4",
     "mime-types": "^2.1.35",
     "path-to-regexp": "^6.2.1",
-    "jsx": "file:jsx",
+    "jsx": "file:dist/jsx",
     "ws": "^8.16.0"
   },
   "devDependencies": {
