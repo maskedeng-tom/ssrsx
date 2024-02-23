@@ -101,7 +101,8 @@ const getPathname = (server: HttpServer): string => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getBody = <T = any>(server: HttpServer): T => {
   if(isKoaServer(server)){
-    return server.koa!.ctx?.request?.body as T;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+    return (server.koa!.ctx?.request as any)?.body as T;
   }
   if(isExpressServer(server)){
     return server.express!.req?.body as T;
@@ -112,10 +113,12 @@ const getBody = <T = any>(server: HttpServer): T => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getSession = <T = any>(server: HttpServer): T => {
   if(isKoaServer(server)){
-    return (server.koa!.ctx?.session as unknown as T);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    return ((server.koa!.ctx as any)?.session as unknown as T);
   }
   if(isExpressServer(server)){
-    return server.express!.req?.session as unknown as T;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+    return (server.express!.req as any)?.session as unknown as T;
   }
   throw new Error('server is not Koa or Express');
 };

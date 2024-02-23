@@ -21,7 +21,7 @@
     "url": "https://github.com/maskedeng-tom/ssrsx.git"
   },
   "scripts": {
-    "build": "rimraf ./dist && tsc --project tsconfig.build.json && npm run modDist && cp -r client dist",
+    "build": "rimraf ./dist && tsc --project tsconfig.build.json && npm run modDist && cp -r src/core/client dist/src/core/",
     "modDist": "echo '/// <reference path=\"../ssrsx.d.ts\" />' > data.tmp; cat dist/index.d.ts >> data.tmp; cat data.tmp > dist/index.d.ts && rm data.tmp",
     "prepublishOnly": "npm version patch && npm run build",
     "start": "nodemon",
