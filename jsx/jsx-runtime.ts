@@ -72,4 +72,4 @@ const Fragment = (
 ////////////////////////////////////////////////////////////////////////////////
 
 export { jsx, jsxs, Fragment };
-export { VirtualElement, VirtualChildren };
+export { VirtualElement_, VirtualElement, VirtualChildren };

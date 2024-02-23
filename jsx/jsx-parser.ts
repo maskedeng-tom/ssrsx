@@ -6,7 +6,15 @@ import { HttpServer } from '../src/types';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const parseAttributes = (attributes?: {[key:string]: unknown}): string | undefined => {
+let currentSsrsx: SsrsxContext | undefined = undefined;
+
+const getCurrentSsrsx = <C = unknown>(): SsrsxContext<C> | undefined => {
+  return currentSsrsx as SsrsxContext<C>;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+const parseAttributes = (tagname: string, attributes?: {[key:string]: unknown}): string | undefined => {
   //
   if(!attributes){
     return;
@@ -19,15 +27,40 @@ const parseAttributes = (attributes?: {[key:string]: unknown}): string | undefin
   for(const key in attributes){
     const attribute = attributes[key];
     //
+    if(key === '_ssrsxFunctions'){
+      continue;
+    }
+    //
+    if(key === 'href' ||
+      key === 'src' ||
+      (tagname === 'form' && key === 'action') ||
+      key === 'formAction' ||
+      key === 'icon'
+    ){
+      const baseUrl = currentSsrsx?.baseUrl ?? '';
+      const value = String(attribute);
+      const href = (value.slice(0,1) === '/')?`${baseUrl}${value}` : value;
+      result.push(`${key}="${href}"`);
+      continue;
+    }
+    //
     if(key.slice(0, 2) === 'on'){
       //
-      const target = uid;
-      const event = key.slice(2).toLowerCase();
-      const [module, f] = String(attribute).split('.');
-      //
-      events.push({target, event, module, f: f ?? key});
-      needUid = true;
-      //
+      if(String(attribute).indexOf('javascript:') === 0){
+        // inline js
+        const js = String(attribute).slice(11);
+        result.push(`${key}="${js}"`);
+      }else if(String(attribute).indexOf('js:') === 0){
+        // inline js
+        const js = String(attribute).slice(3);
+        result.push(`${key}="${js}"`);
+      }else{
+        const target = uid;
+        const event = key.slice(2).toLowerCase();
+        const [module, f] = String(attribute).split('.');
+        events.push({target, event, module, f: f ?? key});
+        needUid = true;
+      }
       continue;
     }
     //
@@ -65,10 +98,17 @@ const parseAttributes = (attributes?: {[key:string]: unknown}): string | undefin
 
 ////////////////////////////////////////////////////////////////////////////////
 
-interface SsrsxContext<C = unknown, P = unknown> {
+interface GlobalParseContext {
+  redirect?: boolean;
+}
+
+interface SsrsxContext<C = unknown> {
   baseUrl: string;
   context?: C;
-  parseContext: P;
+  parseContext: {
+    global: GlobalParseContext;
+    [key: string]: unknown
+  };
   server: HttpServer;
 }
 
@@ -77,12 +117,6 @@ interface SsrsxFunctions {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
-let currentSsrsx: SsrsxContext | undefined = undefined;
-
-const getCurrentSsrsx = <C = unknown, P = unknown>(): SsrsxContext<C, P> | undefined => {
-  return currentSsrsx as SsrsxContext<C, P>;
-};
 
 const parseCore = async (root: VirtualChildren): Promise<string> => {
   if(!root){
@@ -127,25 +161,27 @@ const parseCore = async (root: VirtualChildren): Promise<string> => {
     return result;
   }
   if(ve.tag){
-    return `<${ve.tag}${parseAttributes(ve.attributes)}>${await parseCore(ve.children)}</${ve.tag}>`;
+    return `<${ve.tag}${parseAttributes(ve.tag, ve.attributes)}>${await parseCore(ve.children)}</${ve.tag}>`;
   }
 
   return '';
 };
 
-const parse = async (root: JSX.Children, httpServer: HttpServer, userContext: unknown, baseUrl: string): Promise<string> => {
+const parse = async (root: JSX.Children, httpServer: HttpServer, userContext: unknown, baseUrl: string): Promise<{body: string, context: SsrsxContext}> => {
   const ssrsx: SsrsxContext = {
     baseUrl,
     context: userContext,
-    parseContext: {},
+    parseContext: {
+      global: {},
+    },
     server: httpServer,
   };
   currentSsrsx = ssrsx;
-  return await parseCore(root);
+  return {body: await parseCore(root), context: ssrsx};
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { Fragment, parse };
-export type { SsrsxContext, SsrsxFunctions };
+export type { SsrsxContext, SsrsxFunctions, GlobalParseContext };
 export { getCurrentSsrsx };

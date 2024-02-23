@@ -1,4 +1,4 @@
-import { setStyle } from '../../index';
+import { useGlobalStyle } from '../../index';
 import { Router, Routes, Route } from '../../index';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -9,6 +9,7 @@ import Logout from './Logout';
 import App from './App';
 import Sub from './Sub';
 import Free from './Free';
+import FreeEx from './FreeEx';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -18,7 +19,7 @@ interface UserContext {
 
 const AppRouter = () => {
   //
-  setStyle({
+  useGlobalStyle({
     html:{
       width: '100%',
       height: '100%',
@@ -69,6 +70,10 @@ const AppRouter = () => {
 
                 <Route path="free">
                   <Free/>
+                </Route>
+
+                <Route path="free/:pppp">
+                  <FreeEx/>
                 </Route>
 
                 <Route path="login">

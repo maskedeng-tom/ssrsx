@@ -12,7 +12,7 @@ const initializeStyles = () => {
   styles = [];
 };
 
-const setStyle = (sass: SassStyles) => {
+const setGlobalStyle = (sass: SassStyles) => {
   styles.push(styleToString(sass));
 };
 
@@ -28,4 +28,4 @@ const getStyles = () => {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { initializeStyles, setStyle, setScopedStyle, getStyles, styleToString };
+export { initializeStyles, setGlobalStyle, setScopedStyle, getStyles, styleToString };

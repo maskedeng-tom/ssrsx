@@ -1,5 +1,5 @@
-import Koa from 'koa';
 import { v4 } from 'uuid';
+import { useSession } from '../../src/hooks';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -7,31 +7,27 @@ interface SessionData {
   key?: string;
 }
 
-const session = (ctx: Koa.Context) => {
-  return (ctx.session as unknown as SessionData);
-};
-
 ////////////////////////////////////////////////////////////////////////////////
 
 const loginUsers: { [key: string]: {username: string} } = {};
 
-const getLoginUser = (ctx: Koa.Context) => {
-  const s = session(ctx);
+const getLoginUser = () => {
+  const s = useSession<SessionData>();
   if(!s.key){
     return undefined;
   }
   return loginUsers[s.key];
 };
 
-const loginUser = (ctx: Koa.Context, params: {username: string}) => {
-  const s = session(ctx);
+const loginUser = (params: {username: string}) => {
+  const s = useSession<SessionData>();
   const key = v4();
   s.key = key;
   loginUsers[key] = params;
 };
 
-const logoutUser = (ctx: Koa.Context) => {
-  const s = session(ctx);
+const logoutUser = () => {
+  const s = useSession<SessionData>();
   if(!s.key){
     return;
   }

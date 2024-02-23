@@ -1,7 +1,7 @@
-import { VirtualChildren } from 'jsx/jsx-runtime';
+import { VirtualChildren } from '../../jsx/jsx-runtime';
 import { SsrsxFunctions } from '../../jsx/jsx-parser';
+import { getParseContext } from '../server/support';
 import { RouterContext } from './Router';
-import { getParseContext } from '../../index';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -11,7 +11,7 @@ const Routes = ({
   children?: VirtualChildren,
   _ssrsxFunctions?: SsrsxFunctions
 }) => {
-  const parseContext = getParseContext<RouterContext>();
+  const parseContext = getParseContext<RouterContext>('router');
 
   // backup context
   const backupRoutesContext = {...parseContext.routes};

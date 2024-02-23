@@ -1,5 +1,6 @@
-import { getCurrentSsrsx, getParseContext } from '../../index';
-import { VirtualChildren } from 'jsx/jsx-runtime';
+import { getParseContext } from '../server/support';
+import { VirtualChildren } from '../../jsx/jsx-runtime';
+import { getCurrentSsrsx } from '../../jsx/jsx-parser';
 import { addFirstSlash, addLastSlash } from './lib/addSlash';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -7,6 +8,7 @@ import { addFirstSlash, addLastSlash } from './lib/addSlash';
 interface RouterContext {
   basename: string;
   matched: string;
+  params: {[key: string]: string};
   routes?: {
     resolved?: boolean;
   };
@@ -14,19 +16,17 @@ interface RouterContext {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const Router = ({/*basename, */children}:{/*basename?: string, */children?: VirtualChildren}) => {
+const Router = ({children}:{children?: VirtualChildren}) => {
   //
   const ssrsx = getCurrentSsrsx();
   const baseUrl = ssrsx?.baseUrl ?? '';
-
-  console.log('===>', baseUrl, '<===');
-
   //
-  const parseContext = getParseContext<RouterContext>();
+  const parseContext = getParseContext<RouterContext>('router');
 
   // set parse context
   parseContext.basename = addFirstSlash(addLastSlash(baseUrl));
-  parseContext.matched = parseContext.basename;//'';
+  parseContext.matched = parseContext.basename;
+  parseContext.params = {};
   parseContext.routes = {};
 
   // output

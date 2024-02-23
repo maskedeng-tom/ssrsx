@@ -1,31 +1,29 @@
-import { Redirect, setScopedStyle, routerPath, getKoa } from '../../index';
+import { Redirect, useScopedStyle, useLocation } from '../../index';
 import { getLoginUser } from './session';
 import { UserContext } from './AppRouter';
 
 const App = () => {
 
-  const koa = getKoa();
-
-  const user = getLoginUser(koa.ctx);
-  if(!user?.username){
-    return <Redirect to="/"/>;
-  }
-
-  const scope = setScopedStyle({
+  const scope = useScopedStyle({
     'div':{
       color: 'red'
     }
   });
+
+  const user = getLoginUser();
+  if(!user?.username){
+    return <Redirect to="/"/>;
+  }
 
   return <>
     <div {...scope}>
       SUB - {user?.username}
     </div>
     <div>
-      <a href={routerPath('/logout')}>Logout</a>
+      <a href='/logout'>Logout</a>
     </div>
     <div>
-      <a href={routerPath('/app')}>App</a>
+      <a href='/app'>App</a>
     </div>
   </>;
 };

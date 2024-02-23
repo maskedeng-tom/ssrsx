@@ -1,11 +1,10 @@
-import { getKoa } from '../../index';
-import { getParseContext } from '../../index';
+import { getParseContext, getServer } from '../server/support';
 import { SsrsxFunctions } from '../../jsx/jsx-parser';
-import { RouterContext } from './Router';
+import { VirtualChildren } from '../../jsx/jsx-runtime';
 import { joinPath } from './lib/joinPath';
 import { matchPath } from './lib/matchPath';
-import { VirtualChildren } from 'jsx/jsx-runtime';
 import { removeFirstSlash } from './lib/addSlash';
+import { RouterContext } from './Router';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -17,8 +16,8 @@ const Route = ({
   children?: VirtualChildren,
   _ssrsxFunctions?: SsrsxFunctions
 }) => {
-  const parseContext = getParseContext<RouterContext>();
-  const koa = getKoa();
+  const parseContext = getParseContext<RouterContext>('router');
+  const server = getServer();
 
   // resolved
   if(parseContext.routes?.resolved){
@@ -34,7 +33,7 @@ const Route = ({
   }
 
   // get url
-  const url = koa.ctx.URL.pathname || '';// TODO express
+  const url = server.koa?.ctx.URL.pathname ?? server.express?.req.path ?? '';
 
   // base path
   const base = parseContext.matched;
@@ -54,6 +53,9 @@ const Route = ({
   }else if(match.subMatch){
     parseContext.matched = joinPath(base, match.offsetPath ?? '', '/');
   }
+
+  // set params
+  Object.assign(parseContext.params, match.params);
 
   // output
   const result = <>{children}</>;

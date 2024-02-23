@@ -2,13 +2,13 @@ var require;
 var ssrsxOptions;
 //
 var ssrsxEventLoaderInitialized = false;
-function ssrsxEventLoaderInitializer(){
+function ssrsxEventLoaderInitializer(cause){
   if(ssrsxEventLoaderInitialized){
     return;
   }
   ssrsxEventLoaderInitialized = true;
   //
-  //console.log('Initialize ssrsx client');
+  console.log('Initialize ssrsx client', cause);
   require.config(ssrsxOptions.requireJsConfig);
   //
   function addEvent(target, ev, mod, f){
@@ -31,13 +31,19 @@ function ssrsxEventLoaderInitializer(){
     const loc = location.hostname;
     const sock = new WebSocket('ws://' + loc + ':' + ssrsxOptions.hotReload);
     console.log('Wait for Hot reload !!', sock);
-    sock.addEventListener('close', e => {e; setTimeout(() => {location.reload();}, ssrsxOptions.hotReloadWait);});
+    sock.addEventListener('close', e => {e; setTimeout(() => {location.reload(true);}, ssrsxOptions.hotReloadWait);});
   }
   //
 }
-addEventListener('load', function load(){
-  ssrsxEventLoaderInitializer();
-});
-addEventListener('readystatechange', function load(){
-  ssrsxEventLoaderInitializer();
-});
+function ssrsxStart(){
+  addEventListener('load', function(){
+    ssrsxEventLoaderInitializer('load');
+  });
+  addEventListener('readystatechange', function(){
+    ssrsxEventLoaderInitializer('readyStateChange');
+  });
+  requestAnimationFrame(function(){
+    ssrsxEventLoaderInitializer('requestAnimationFrame');
+  });
+}
+ssrsxStart();

@@ -17,8 +17,7 @@ interface SsrsxOptions<USER_CONTEXT = unknown> {
   //
   cacheControlMaxAge?: number;
   //
-  context?: (ctx: Koa.Context) => USER_CONTEXT;
-  filter?: (ctx: Koa.Context, next: Koa.Next, userContext: unknown) => boolean;
+  context?: ((server: KoaServer) => USER_CONTEXT) | ((server: ExpressServer) => USER_CONTEXT);
   app?: VirtualElement;
   // for development
   sourceMap?: boolean;
@@ -28,21 +27,33 @@ interface SsrsxOptions<USER_CONTEXT = unknown> {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-interface KoaProps {
+interface KoaServer {
   ctx: Koa.Context;
   next: Koa.Next;
 }
 
-interface ExpressProps {
+interface ExpressServer {
   req: express.Request;
   res: express.Response;
+  next: express.NextFunction;
 }
 
 interface HttpServer {
-  koa?: KoaProps;
-  express?: ExpressProps;
+  koa?: KoaServer;
+  express?: ExpressServer;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { SsrsxOptions, KoaProps, ExpressProps, HttpServer };
+const isKoaServer = (server: HttpServer) => {
+  return 'koa' in server;
+};
+
+const isExpressServer = (server: HttpServer) => {
+  return 'express' in server;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+export { SsrsxOptions, KoaServer, ExpressServer, HttpServer };
+export { isKoaServer, isExpressServer };

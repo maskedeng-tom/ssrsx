@@ -1,16 +1,10 @@
-import { getKoa } from '../../index';
-import { getParseContext } from '../../index';
-import { RouterContext } from './Router';
-import { joinPath } from './lib/joinPath';
+import { useNavigate } from './hooks/useNavigate';
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const Redirect = ({to}:{to: string,}) => {
-  const parseContext = getParseContext<RouterContext>();
-  const koa = getKoa();
-  //
-  const target = joinPath(parseContext.basename ?? '', to);
-  koa.ctx.redirect(target);  // express?.res
+  const navigate = useNavigate();
+  navigate(to);
   return <></>;
 };
 

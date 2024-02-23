@@ -1,11 +1,11 @@
-import { Redirect, getKoa } from '../../index';
+import { Redirect, useBody } from '../../index';
 import { loginUser } from './session';
 import { LoginInfo } from './Index';
 import { UserContext } from './AppRouter';
 
 const Login = () => {
-  const koa = getKoa();
-  loginUser(koa.ctx, {username: String((koa.ctx.request.body as LoginInfo).username)});
+  const body = useBody<{username: string}>();
+  loginUser({username: body.username});
   return <Redirect to="/app"/>;
 };
 

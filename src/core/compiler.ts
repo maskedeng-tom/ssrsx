@@ -4,8 +4,8 @@ const log = debug('ssrsx');
 const logError = debug('ssrsx:error');
 import path from 'path';
 import childProcess from 'child_process';
-import { readdirSyncRecursively } from '../lib/readdirSyncRecursively';
-import { TscOption } from '../index';
+import { TscOption } from '../core';
+import { errorConsole } from '../lib/errorConsole';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -24,72 +24,70 @@ const execSync = async (cmd: string): Promise<{result: boolean, err: childProces
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const createCompiler = () => {
+const changeExt = (filename: string, ext: string) => {
+  const extname = path.extname(filename);
+  return filename.replace(new RegExp(`${extname}$`), ext);
+};
+
+const createCompiler = (clientRoot: string, workRoot: string, tscOptions: TscOption) => {
 
   const jsCache: { [key: string]: string } = {};
 
-  let compiled = false;
-  const compile = async (clientRoot: string, workRoot: string, tscOptions: TscOption) => {
-    if(compiled){
+  const compile = async (jsUrl: string) => {
+    // check cache
+    if(jsCache[jsUrl]){
+      return jsCache[jsUrl];
+    }
+
+    // target js file
+    const ext = path.extname(jsUrl);
+    if(ext !== '.js'){
       return;
     }
-    compiled = true;
 
-    let errorCount = 0;
-
-    const files = readdirSyncRecursively(clientRoot);
-    if(files.length === 0){
-      return true;
+    // create tsc options
+    const offsetPath = jsUrl.split('/').slice(0, -1).join('/');
+    tscOptions.outDir = path.join(workRoot, offsetPath);
+    //
+    const options: string[] = [];
+    for(const key in tscOptions){
+      options.push(`--${key} ${tscOptions[key as keyof typeof tscOptions]}`);
     }
 
-    for(let i = 0; i < files.length; i++){
-      // target ts(x) file
-      const file = files[i].slice(clientRoot.length + 1);
-      const ext = path.extname(file);
-      if(ext !== '.ts' && ext !== '.tsx'){
-        continue;
-      }
-
-      // create tsc options
-      const offsetPath = file.split('/').slice(0, -1).join('/');
-      tscOptions.outDir = path.join(workRoot, offsetPath);
-      //
-      const options: string[] = [];
-      for(const key in tscOptions){
-        options.push(`--${key} ${tscOptions[key as keyof typeof tscOptions]}`);
-      }
-
-      // compile
-      const fileName = path.join(clientRoot, file);
-      const outputFileName = path.join(workRoot, file).split('.').slice(0, -1).join('.') + '.js';
-      //
-      const cmd = `tsc ${fileName} ${options.join(' ')}`;
-      if(!(await execSync(cmd)).result){
-        ++errorCount;
-        logError(`Compile error: ${file}`);
-      }else{
-        log(`Compiled: ${file}`);
-        if(fs.existsSync(outputFileName)){
-          console.log('------------------------4---------------------', outputFileName);
-          const js = fs.readFileSync(outputFileName).toString();
-          if(js){
-            jsCache[file.split('.').slice(0, -1).join('.') + '.js'] = js;
-          }
-        }
+    // ts filename
+    let ts = changeExt(jsUrl, '.client.ts');
+    let tsPath = path.join(clientRoot, ts);
+    if(!fs.existsSync(tsPath)){
+      ts = changeExt(jsUrl, '.client.tsx');
+      tsPath = path.join(clientRoot, ts);
+      if(!fs.existsSync(tsPath)){
+        return;
       }
     }
-    //
-    return(errorCount === 0);
-    //
-  };
 
-  const getJs = (file: string) => {
-    return jsCache[file];
+    // compile
+    const outputFileName = path.join(workRoot, changeExt(jsUrl, '.client.js'));
+    //
+    const cmd = `tsc ${tsPath} ${options.join(' ')}`;
+    const compileResult = await execSync(cmd);
+    if(!compileResult.result){
+      logError(`Compile error: ${jsUrl} ${tsPath} ${compileResult.stdout}`);
+      return errorConsole('Compile error', `${tsPath}\n\t${compileResult.stdout}`);
+    }
+    log(`Compiled: ${tsPath} (${jsUrl})`);
+    if(fs.existsSync(outputFileName)){
+      const js = fs.readFileSync(outputFileName).toString();
+      fs.unlinkSync(outputFileName);
+      if(js){
+        return jsCache[jsUrl] = js;
+      }
+    }
+    return;
+    //
   };
 
   return {
     compile,
-    getJs,
   };
 
 };
