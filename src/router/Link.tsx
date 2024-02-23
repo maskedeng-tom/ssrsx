@@ -1,4 +1,4 @@
-import { jsx, VirtualChildren } from '../../jsx/jsx-runtime';
+import { jsx, jsxs, Fragment, VirtualChildren } from '../../jsx/jsx-runtime';
 import { joinPath } from './lib/joinPath';
 import { getCurrentSsrsx } from 'jsx/jsx-parser';
 
