@@ -284,7 +284,7 @@ This is a sample using jQuery. External libraries are loaded using requirejs. Sp
 ```bash
 npm install @maskedeng-tom/ssrsx
 npm install koa @types/koa
-npm install jquery
+npm install jquery @types/jquery
 
 mkdir src
 mkdir src/client
@@ -299,6 +299,7 @@ cp node_modules/jquery/dist/jquery.min.js src/client
 ### client script with jQuery
 
 ```ts
+// src/client/test.client.js
 import $ from 'jquery';
 
 const onClick = (e: Event) => {
@@ -360,8 +361,8 @@ app.listen(3000);
 If you want to use a CDN, specify the same version of jQuery as the one you installed with `npm install jquery`.
 
 ```tsx
+// index.tsx
 ...
-
 app.use(ssrsxKoa({
   development: true,
   clientRoot: 'src/client',

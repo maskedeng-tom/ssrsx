@@ -9,7 +9,7 @@ import { getDir } from './lib/getDir';
 import { createCompiler } from './core/compiler';
 import { errorConsole } from './lib/errorConsole';
 import { ElementEvent, parse } from '../jsx/jsx-parser';
-import { SsrsxOptions, HttpServer } from './types';
+import { SsrsxOptions, HttpServer, isKoaServer, isExpressServer } from './types';
 import { addFirstSlash, removeLastSlash } from './router/lib/addSlash';
 import { sendData } from './server/sendData';
 import { getPathname } from './server/support';
@@ -255,19 +255,25 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
 
   /////////////////////////////////////////
 
-  //let events: ElementEvent[] = [];
-
-  const addScripts = (body: string, events: ElementEvent[]) => {
+  const addScripts = (server: HttpServer, body: string, events: ElementEvent[]) => {
     const requireJsOptions = {
       baseUrl: ssrsxBaseUrl,
       urlArgs: 't=' + bust,
       paths: option?.requireJsPaths,
     };
+    //
+    let nonce = '';
+    if(isKoaServer(server)){
+      nonce = String(server.koa!.ctx.state.nonce);
+    }
+    if(isExpressServer(server)){
+      nonce = String((server.express!.res).locals.nonce);
+    }
     // add scripts
     const addScript = `
     <script src="${ssrsxBaseUrl}${requireJs}"></script>
     <script src="${ssrsxBaseUrl}${eventLoaderJs}"></script>
-    <script>
+    <script ${nonce? `nonce="${nonce}"` : ''}>
     ssrsxOptions = {
       events: ${JSON.stringify(events)},
       hotReload: ${option?.hotReload? HotReload: false},
@@ -276,6 +282,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     };
     </script>
     `;
+    //
     // find /body
     const bodyCloseTag = /<(\s*)\/(\s*)body(\s*)>/i;
     // body tag not found
@@ -308,7 +315,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     sendData(server, {
       status: 200,
       type: 'text/html',
-      body: addScripts(addStyles(result.body, result.context.styles.join('\n')), result.context.events),
+      body: addScripts(server, addStyles(result.body, result.context.styles.join('\n')), result.context.events),
       source: url,
     });
     //

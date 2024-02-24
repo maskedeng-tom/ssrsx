@@ -6,6 +6,7 @@ import helmet from 'koa-helmet';
 import express from 'express';
 import expressSession from 'express-session';
 import expressHelmet from 'helmet';
+import crypto from 'crypto';
 
 import { ssrsxKoa, ssrsxExpress } from '../src/';
 
@@ -32,13 +33,20 @@ const startServerKoa = () => {
     ctx.res.removeHeader('x-powered-by');
   });
 
-  if(process.env.NODE_ENV === 'production'){
-    app.use(helmet());
-    app.use(helmet.contentSecurityPolicy({ directives: {
+  //if(process.env.NODE_ENV === 'production'){
+  app.use(helmet());
+  app.use((ctx, next) => {
+    ctx.state.nonce = crypto.randomBytes(16).toString('base64');
+    return helmet.contentSecurityPolicy({ directives: {
       defaultSrc: ['\'self\'','ws'],
       connectSrc: ['\'self\'','ws://*:*'],
-    } }));
-  }
+      scriptSrc: [
+        '\'self\'',
+        `'nonce-${ctx.state.nonce}'`,
+        //'https://code.jquery.com/jquery-3.7.1.min.js'
+      ],
+    }})(ctx, next) as Koa.Middleware;
+  });
 
   app.use(ssrsxKoa({
     baseUrl: '/a',
@@ -72,13 +80,20 @@ const startServerExpress = () => {
     cookie: { secure: false }
   }));
 
-  if(process.env.NODE_ENV === 'production'){
-    app.use(expressHelmet());
-    app.use(expressHelmet.contentSecurityPolicy({ directives: {
+  //if(process.env.NODE_ENV === 'production'){
+  app.use(expressHelmet());
+  app.use((req, res, next) => {
+    (res as express.Response).locals.nonce = crypto.randomBytes(16).toString('base64');
+    expressHelmet.contentSecurityPolicy({ directives: {
       defaultSrc: ['\'self\'','ws'],
       connectSrc: ['\'self\'','ws://*:*'],
-    } }));
-  }
+      scriptSrc: [
+        '\'self\'',
+        (req, res) => `'nonce-${(res as express.Response).locals?.nonce}'`,
+        //'https://code.jquery.com/jquery-3.7.1.min.js'
+      ],
+    }})(req, res, next);
+  });
 
   app.use(function (req, res, next) {
     res.removeHeader('x-powered-by');
