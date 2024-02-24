@@ -39,7 +39,7 @@ const useLocation = () => {
     port: Number(parsedUrl.port),
     href: `${protocol}://${hostname}:${port}${getUrl(server)}`,
     pathname: parsedUrl.pathname,
-    search,
+    search: search,
     hash: parsedUrl.hash,
     //
     realPathname: joinPath(baseUrl, parsedUrl.pathname),

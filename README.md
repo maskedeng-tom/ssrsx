@@ -3,21 +3,33 @@
 [![npm version](https://badge.fury.io/js/%40maskedeng-tom%2Fssrsx.svg)](https://badge.fury.io/js/%40maskedeng-tom%2Fssrsx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+-----
+
 ## Table of Contents
 
 - [Basic Usage with Koa](#basic-usage-with-koa)
+  - [install](#install)
+  - [tsconfig.json](#tsconfigjson)
+  - [server side](#server-side)
+  - [start application](#start-application)
 - [with express](#with-express)
 - [with Router](#with-router)
 - [with client script](#with-client-script)
 - [with jQuery](#with-jquery)
 - [with jQuery with CDN](#with-jquery-with-cdn)
+- [use POST method](#use-post-method)
+  - [express body parser](#express-body-parser)
+- [use session](#use-session)
+- [with CSP (Content Security Policy)](#with-csp-content-security-policy)
+  - [CSP with Koa](#csp-with-koa)
+  - [CSP with express](#csp-with-express)
 - [Contributing](#contributing)
 - [Credits](#credits)
 - [Authors](#authors)
 - [Show your support](#show-your-support)
 - [License](#license)
 
-<br/>
+-----
 
 ## Basic Usage with Koa
 
@@ -74,7 +86,7 @@ app.listen(3000);
 
 ```
 
-### start
+### start application
 
 ```bash
 npm install
@@ -83,7 +95,7 @@ npm run start
 
 and access to [http://localhost:3000/](http://localhost:3000/)
 
-<br/>
+-----
 
 ## with express
 
@@ -132,7 +144,7 @@ app.listen(3000);
 
 ```
 
-<br/>
+-----
 
 ## with Router
 
@@ -194,7 +206,7 @@ app.listen(3000);
 
 ```
 
-<br/>
+-----
 
 ## with client script
 
@@ -218,7 +230,7 @@ const onClick = (e: Event) => {
 export { onClick }; // need export! important!
 ```
 
-- server side
+### server side
 
   - `js://` is a protocol to call client script function from ssrsx.
 
@@ -270,7 +282,7 @@ app.use(ssrsxKoa({
 app.listen(3000);
 ```
 
-<br/>
+-----
 
 ## with jQuery
 
@@ -354,9 +366,9 @@ app.use(ssrsxKoa({
 app.listen(3000);
 ```
 
-<br/>
+-----
 
-## with jQuery with CDN
+## with jQuery from CDN
 
 If you want to use a CDN, specify the same version of jQuery as the one you installed with `npm install jquery`.
 
@@ -375,7 +387,282 @@ app.use(ssrsxKoa({
 ...
 ```
 
-<br/>
+-----
+
+## use POST method
+
+You can get the data sent by the POST method by using the `useBody` function.
+and You need to add a `body parser` to get the data sent by the POST method.
+
+```tsx
+// index.tsx
+import Koa from 'koa';
+import bodyParser from 'koa-bodyparser';  // add body parser
+import { ssrsxKoa, Router, Routes, Route, Link, useBody } from '../';
+
+////////////////////////////////////////////////////////////////////////////////
+
+const LoginCheck = () => {
+  // post body data
+  const body = useBody<{username: string, password: string}>();
+  //
+  return <>
+    <h1>Login Post Result</h1>
+    <div>
+      <div>Username: {body.username}</div>
+      <div>Password: {body.password}</div>
+    </div>
+    <Link to="/">Top</Link>
+  </>;
+};
+
+const LoginForm = () => {
+  return <>
+    <h1>Login Form</h1>
+    <form method="post" action="/login">
+      <div>
+        <label>
+          username: <input type="text" name="username" />
+        </label>
+      </div>
+      <div>
+        <label>
+          password: <input type="password" name="password" />
+        </label>
+      </div>
+      <button type="submit">Login</button>
+    </form>
+  </>;
+};
+
+const App = () => {
+  return <html lang="en">
+    <head>
+      <meta charSet="utf-8"/>
+      <title>Ssrsx</title>
+    </head>
+    <body>
+      <Router>
+        <Routes>
+          <Route path="/"><LoginForm /></Route>
+          <Route path="/login"><LoginCheck /></Route>
+        </Routes>
+      </Router>
+    </body>
+  </html>;
+};
+
+const app = new Koa();
+
+// body parser
+app.use(bodyParser());
+
+app.use(ssrsxKoa({
+  development: true,
+  clientRoot: 'test/client',
+  app: <App/>
+}));
+
+app.listen(3000);
+```
+
+### express body parser
+
+```tsx
+// index.tsx
+...
+// body parser
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+...
+```
+
+-----
+
+## use session
+
+```tsx
+// index.tsx
+import Koa from 'koa';
+import bodyParser from 'koa-bodyparser';  // add body parser
+import session from 'koa-session';        // add session  
+//
+import { ssrsxKoa, ssrsxExpress, useSearch } from '../';
+import { Router, Routes, Route, Link, Navigate, useBody, useSession } from '../';
+
+////////////////////////////////////////////////////////////////////////////////
+
+interface SessionContext {
+  username?: string;
+}
+
+const Authorized = () => {
+  // session
+  const session = useSession<SessionContext>();
+  if(!session.username){
+    // not authorized
+    return <Navigate to="/"/>;
+  }
+  // authorized
+  return <>
+    <h1>Authorized</h1>
+    <div>
+      <div>Authorized Username: {session.username}</div>
+    </div>
+    <Link to="/logout">Logout</Link>
+  </>;
+};
+
+const Login = () => {
+  // session
+  const session = useSession<SessionContext>();
+  // post body data
+  const body = useBody<{username: string, password: string}>();
+  // check username and password
+  if(body.username === 'admin' && body.password === 'admin'){
+    session.username = body.username;
+    return <Navigate to="/authorized"/>;
+  }
+  // authorization failed
+  return <Navigate to="/?message=authorization_failed"/>;
+};
+
+const Logout = () => {
+  // set session
+  const session = useSession<SessionContext>();
+  // session clear
+  session.username = undefined;
+  // redirect to top
+  return <Navigate to="/"/>;
+};
+
+const LoginForm = () => {
+  // get search(query parameter) data (?message=...)
+  const search = useSearch<{message: string}>();
+  // set session
+  const session = useSession<SessionContext>();
+  if(session.username){
+    // already authorized
+    return <Navigate to="/authorized"/>;
+  }
+  // login form
+  return <>
+    <h1>Login Form</h1>
+    <form method="post" action="/login">
+      <div>
+        <label>
+          username: <input type="text" name="username" />
+        </label>
+      </div>
+      <div>
+        <label>
+          password: <input type="password" name="password" />
+        </label>
+      </div>
+      {
+        search.message && <div>{search.message}</div>
+      }
+      <button type="submit">Login</button>
+    </form>
+  </>;
+};
+
+const App = () => {
+  return <html lang="en">
+    <head>
+      <meta charSet="utf-8"/>
+      <title>Ssrsx</title>
+    </head>
+    <body>
+      <Router>
+        <Routes>
+          <Route path="/"><LoginForm /></Route>
+          <Route path="/login"><Login /></Route>
+          <Route path="/logout"><Logout /></Route>
+          <Route path="/authorized"><Authorized /></Route>
+        </Routes>
+      </Router>
+    </body>
+  </html>;
+};
+
+const app = new Koa();
+
+app.keys = ['your custom secret'];  // session key
+app.use(session(app));              // add session
+
+app.use(bodyParser());
+
+app.use(ssrsxKoa({
+  development: true,
+  clientRoot: 'test/client',
+  app: <App/>
+}));
+
+app.listen(3000);
+```
+
+-----
+
+## with CSP (Content Security Policy)
+
+Setting CSP (Content Security Policy) requires allowing `ws://` to communicate with WebSocket for ssrsx HotReload (`development: true`).
+
+Also, because inline scripts are used internally, you need to allow `'unsafe-inline'` or `'nonce-${nonce}'`.
+
+### CSP with Koa
+
+```tsx
+// index.tsx
+import helmet from 'koa-helmet';
+import crypto from 'crypto';
+...
+if(process.env.NODE_ENV === 'production'){
+  app.use(helmet());
+  app.use((ctx, next) => {
+    // set nonce to state
+    ctx.state.nonce = crypto.randomBytes(16).toString('base64');
+    //
+    return helmet.contentSecurityPolicy({ directives: {
+      defaultSrc: ['\'self\'','ws'],        // add 'ws'
+      connectSrc: ['\'self\'','ws://*:*'],  // add 'ws://*:*'
+      scriptSrc: [
+        '\'self\'',
+        `'nonce-${ctx.state.nonce}'`,       // add 'nonce-??' or 'unsafe-inline'
+      ],
+    }})(ctx, next) as Koa.Middleware;
+  });
+}
+```
+
+### CSP with express
+
+```tsx
+// index.tsx
+import helmet from 'helmet';
+import crypto from 'crypto';
+...
+if(process.env.NODE_ENV === 'production'){
+  app.use(helmet());
+  app.use((req, res, next) => {
+    // set nonce to locals
+    (res as express.Response).locals.nonce = crypto.randomBytes(16).toString('base64');
+    //
+    helmet.contentSecurityPolicy({ directives: {
+      defaultSrc: ['\'self\'','ws'],        // add 'ws'
+      connectSrc: ['\'self\'','ws://*:*'],  // add 'ws://*:*'
+      scriptSrc: [
+        '\'self\'',
+        // add 'nonce-??' or 'unsafe-inline'
+        (req, res) => `'nonce-${(res as express.Response).locals?.nonce}'`,
+      ],
+    }})(req, res, next);
+  });
+}
+...
+```
+
+-----
 
 ## Contributing
 
@@ -397,7 +684,7 @@ app.use(ssrsxKoa({
 > 5. Push to the branch: `git push origin my-new-feature`
 > 6. Submit a pull request :sunglasses:
 
-<br/>
+-----
 
 ## Credits
 
@@ -405,7 +692,7 @@ app.use(ssrsxKoa({
 
 > Simplify the complex development landscape of today! :muscle:
 
-<br/>
+-----
 
 ## Authors
 
@@ -415,7 +702,7 @@ app.use(ssrsxKoa({
 
 > See also the list of [contributors](https://github.com/maskedeng-tom/ssrsx/contributors) who participated in this project.
 
-<br/>
+-----
 
 ## Show your support
 
@@ -423,7 +710,7 @@ app.use(ssrsxKoa({
 
 > Please :star: this repository if this project helped you!
 
-<br/>
+-----
 
 ## License
 

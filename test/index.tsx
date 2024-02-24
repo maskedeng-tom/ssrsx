@@ -8,14 +8,151 @@ import expressSession from 'express-session';
 import expressHelmet from 'helmet';
 import crypto from 'crypto';
 
-import { ssrsxKoa, ssrsxExpress } from '../src/';
+import { ssrsxKoa, ssrsxExpress, useSearch } from '../';
+import { Router, Routes, Route, Link, Navigate, useBody, useSession } from '../';
 
 ////////////////////////////////////////////////////////////////////////////////
+
+interface SessionContext {
+  username?: string;
+}
+
+const Authorized = () => {
+  // session
+  const session = useSession<SessionContext>();
+  if(!session.username){
+    // not authorized
+    return <Navigate to="/"/>;
+  }
+  // authorized
+  return <>
+    <h1>Authorized</h1>
+    <div>
+      <div>Authorized Username: {session.username}</div>
+    </div>
+    <Link to="/logout">Logout</Link>
+  </>;
+};
+
+const Login = () => {
+  // session
+  const session = useSession<SessionContext>();
+  // post body data
+  const body = useBody<{username: string, password: string}>();
+  // check username and password
+  if(body.username === 'admin' && body.password === 'admin'){
+    session.username = body.username;
+    return <Navigate to="/authorized"/>;
+  }
+  // authorization failed
+  return <Navigate to="/?message=authorization_failed"/>;
+};
+
+const Logout = () => {
+  // set session
+  const session = useSession<SessionContext>();
+  // session clear
+  session.username = undefined;
+  // redirect to top
+  return <Navigate to="/"/>;
+};
+
+const LoginForm = () => {
+  // get search(query parameter) data (?message=...)
+  const search = useSearch<{message: string}>();
+  // set session
+  const session = useSession<SessionContext>();
+  if(session.username){
+    // already authorized
+    return <Navigate to="/authorized"/>;
+  }
+  // login form
+  return <>
+    <h1>Login Form</h1>
+    <form method="post" action="/login">
+      <div>
+        <label>
+          username: <input type="text" name="username" />
+        </label>
+      </div>
+      <div>
+        <label>
+          password: <input type="password" name="password" />
+        </label>
+      </div>
+      {
+        search.message && <div>{search.message}</div>
+      }
+      <button type="submit">Login</button>
+    </form>
+  </>;
+};
+
+const App = () => {
+  return <html lang="en">
+    <head>
+      <meta charSet="utf-8"/>
+      <title>Ssrsx</title>
+    </head>
+    <body>
+      <Router>
+        <Routes>
+          <Route path="/"><LoginForm /></Route>
+          <Route path="/login"><Login /></Route>
+          <Route path="/logout"><Logout /></Route>
+          <Route path="/authorized"><Authorized /></Route>
+        </Routes>
+      </Router>
+    </body>
+  </html>;
+};
+
+const startSample = () => {
+
+  const app = new Koa();
+
+  app.keys = ['f6fba634-dedb-9d6c-c1de-acd2196e3786'];
+  app.use(session(app));
+  app.use(bodyParser());
+  /*
+  app.use(async (ctx, next) => {
+    await next();
+    ctx.res.removeHeader('x-powered-by');
+  });
+
+  //if(process.env.NODE_ENV === 'production'){
+  app.use(helmet());
+  app.use((ctx, next) => {
+    ctx.state.nonce = crypto.randomBytes(16).toString('base64');
+    return helmet.contentSecurityPolicy({ directives: {
+      defaultSrc: ['\'self\'','ws'],
+      connectSrc: ['\'self\'','ws://*:*'],
+      scriptSrc: [
+        '\'self\'',
+        `'nonce-${ctx.state.nonce}'`,
+        //'https://code.jquery.com/jquery-3.7.1.min.js'
+      ],
+    }})(ctx, next) as Koa.Middleware;
+  });
+  */
+
+  app.use(ssrsxKoa({
+    development: true,
+    clientRoot: 'test/client',
+    app: <App/>
+  }));
+
+  app.listen(3000);
+
+};
+startSample();
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
 
 import AppRouter, { UserContext } from './server/AppRouter';
-
-
-////////////////////////////////////////////////////////////////////////////////
 
 const startServerKoa = () => {
 
@@ -123,5 +260,5 @@ const startServerExpress = () => {
   app.listen(3001);
 };
 
-startServerKoa();
-startServerExpress();
+//startServerKoa();
+//startServerExpress();

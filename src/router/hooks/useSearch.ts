@@ -1,0 +1,12 @@
+import { useLocation } from './useLocation';
+
+////////////////////////////////////////////////////////////////////////////////
+
+const useSearch = <SEARCH = {[key:string]: string | string[]}>() => {
+  const location = useLocation();
+  return location.search as SEARCH;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+export { useSearch };

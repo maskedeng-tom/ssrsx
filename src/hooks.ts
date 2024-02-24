@@ -6,6 +6,7 @@ import { styleToString } from './styleToString/styleToString';
 import { shortId } from './lib/shortId';
 
 ////////////////////////////////////////////////////////////////////////////////
+// http server
 
 const useServer = <T = KoaServer | ExpressServer>() => {
   const server = getServer();
@@ -13,29 +14,30 @@ const useServer = <T = KoaServer | ExpressServer>() => {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+// body
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const useBody = <T = any>() => {
+const useBody = <T = {[key:string]: string}>() => {
   const server = getServer();
   return getBody<T>(server);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+// session
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const useSession = <T = any>() => {
+const useSession = <T = {[key:string]: string}>() => {
   const server = getServer();
   return getSession<T>(server);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+// user context
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const useContext = <T = any>() => {
+const useContext = <T = {[key:string]: string}>() => {
   return getContext<T>();
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+// Styles
 
 const useGlobalStyle = (style: SassStyles) => {
   const ssrsx = getCurrentSsrsx();
