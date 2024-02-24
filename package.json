@@ -24,7 +24,7 @@
   "scripts": {
     "release": "npm version patch && npm run build && cd dist && npm publish && cd ..",
     "build": "rimraf ./dist && tsc --project tsconfig.build.json && npm run mod-dist && npm run build-cp",
-    "build-cp": "cp -r src/core/client dist/src/core/ && cp ssrsx.d.ts dist/ && cp package.json dist/ && cp jsx/package.json dist/jsx/",
+    "build-cp": "cp -r src/core/client dist/src/core/ && cp ssrsx.d.ts dist/ && cp package.json dist/ && cp jsx/package.json dist/jsx/&& cp README.md dist",
     "mod-dist": "echo '/// <reference path=\"./ssrsx.d.ts\" />' > data.tmp; cat dist/index.d.ts >> data.tmp; cat data.tmp > dist/index.d.ts && rm data.tmp",
     "start": "nodemon",
     "test": "jest"
