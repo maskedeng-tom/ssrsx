@@ -1,6 +1,6 @@
 {
   "name": "@maskedeng-tom/ssrsx",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "server side renderer with tsx(jsx)",
   "keywords": [
     "html",
