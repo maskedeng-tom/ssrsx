@@ -21,14 +21,6 @@ declare namespace JSX {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  /*
-  interface IntrinsicAttributes {
-    ssrsx?: SsrsxContext;
-    koa?: unknown;
-    express?: unknown;
-  }
-  */
-  //////////////////////////////////////////////////////////////////////////////
 
   interface IntrinsicElements {
     [elementName: string]: {
