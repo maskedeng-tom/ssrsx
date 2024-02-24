@@ -1,6 +1,6 @@
 {
   "name": "@maskedeng-tom/ssrsx",
-  "version": "0.1.49",
+  "version": "0.1.51",
   "description": "server side renderer with tsx(jsx)",
   "keywords": [
     "html",
@@ -10,10 +10,11 @@
     "rendering",
     "jsx",
     "tsx",
-    "koa"
+    "koa",
+    "express"
   ],
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "author": "Maskedeng Tom",
   "license": "MIT",
   "repository": {
@@ -21,12 +22,10 @@
     "url": "https://github.com/maskedeng-tom/ssrsx.git"
   },
   "scripts": {
-    "build": "rimraf ./dist && tsc --project tsconfig.build.json && npm run modDist && cp -r src/core/client dist/src/core/",
-    "modDist": "echo '/// <reference path=\"../ssrsx.d.ts\" />' > data.tmp; cat dist/index.d.ts >> data.tmp; cat data.tmp > dist/index.d.ts && rm data.tmp",
-    "prepublishOnly": "npm version patch && npm run build && npm run _pre_publish",
-    "postpack": "npm run _post_publish",
-    "_pre_publish": "mv package.json package.json.bak && mv package.publish.json package.json && npm version patch",
-    "_post_publish": "mv package.json package.publish.json && mv package.json.bak package.json",
+    "build": "rimraf ./dist && tsc --project tsconfig.build.json && npm run mod-dist && npm run build-cp",
+    "build-cp": "cp -r src/core/client dist/src/core/ && cp ssrsx.d.ts dist/ && cp package.json dist/ && cp jsx/package.json dist/jsx/",
+    "mod-dist": "echo '/// <reference path=\"./ssrsx.d.ts\" />' > data.tmp; cat dist/index.d.ts >> data.tmp; cat data.tmp > dist/index.d.ts && rm data.tmp",
+    "prepublishOnly": "npm version patch && npm run build",
     "start": "nodemon",
     "test": "jest"
   },
