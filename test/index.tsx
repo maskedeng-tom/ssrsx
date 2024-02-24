@@ -13,6 +13,7 @@ import { ssrsxKoa, ssrsxExpress } from '../src/';
 
 import AppRouter, { UserContext } from './server/AppRouter';
 
+
 ////////////////////////////////////////////////////////////////////////////////
 
 const startServerKoa = () => {
@@ -21,19 +22,8 @@ const startServerKoa = () => {
 
   app.keys = ['f6fba634-dedb-9d6c-c1de-acd2196e3786'];
   app.use(session({
-    key: 'ssrsx.session', /** (string) cookie key (default is koa.sess) */
-    /** (number || 'session') maxAge in ms (default is 1 days) */
-    /** 'session' will result in a cookie that expires when session/browser is closed */
-    /** Warning: If a session cookie is stolen, this cookie will never expire */
+    key: 'ssrsx.session',
     maxAge: 86400000,
-    //autoCommit: true, /** (boolean) automatically commit headers (default true) */
-    //overwrite: true, /** (boolean) can overwrite or not (default true) */
-    //httpOnly: true, /** (boolean) httpOnly or not (default true) */
-    //signed: true, /** (boolean) signed or not (default true) */
-    //rolling: false, /** (boolean) Force a session identifier cookie to be set on every response. The expiration is reset to the original maxAge, resetting the expiration countdown. (default is false) */
-    //renew: false, /** (boolean) renew session when session is nearly expired, so we can always keep user logged in. (default is false)*/
-    //secure: true, /** (boolean) secure cookie*/
-    //sameSite: null, /** (string) session cookie sameSite options (default null, don't set it) */
   }, app));
   app.use(bodyParser());
 
@@ -56,7 +46,6 @@ const startServerKoa = () => {
     clientRoot: 'test/client',
     requireJsRoot: 'test/client',
     requireJsPaths: {
-      //'jquery': 'https://code.jquery.com/jquery-3.7.1.min',
       'jquery': 'jquery.min',
     },
     context: (): UserContext => {
@@ -106,7 +95,6 @@ const startServerExpress = () => {
     clientRoot: 'test/client',
     requireJsRoot: 'test/client',
     requireJsPaths: {
-      //'jquery': 'https://code.jquery.com/jquery-3.7.1.min',
       'jquery': 'jquery.min',
     },
     context: (): UserContext => {
@@ -117,8 +105,8 @@ const startServerExpress = () => {
     app: <AppRouter/>
   }));
 
-  app.listen(3000);
+  app.listen(3001);
 };
 
+startServerKoa();
 startServerExpress();
-//startServerKoa();

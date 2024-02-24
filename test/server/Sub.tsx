@@ -1,6 +1,7 @@
 import { Redirect, useScopedStyle, useLocation } from '../../index';
 import { getLoginUser } from './session';
 import { UserContext } from './AppRouter';
+import Menu from './Menu';
 
 const App = () => {
 
@@ -24,6 +25,9 @@ const App = () => {
     </div>
     <div>
       <a href='/app'>App</a>
+    </div>
+    <div>
+      <Menu/>
     </div>
   </>;
 };

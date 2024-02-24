@@ -4,13 +4,11 @@ const log = debug('ssrsx');
 import fs from 'fs';
 import path from 'path';
 import { Server } from 'ws';
-import { initializeParse, events } from './core/eventSupport';
 import { getRequireJs, getLoadEventsJs } from './core/getJs';
 import { getDir } from './lib/getDir';
 import { createCompiler } from './core/compiler';
 import { errorConsole } from './lib/errorConsole';
-import { initializeStyles, getStyles } from './core/cssSupport';
-import { parse } from '../jsx/jsx-parser';
+import { ElementEvent, parse } from '../jsx/jsx-parser';
 import { SsrsxOptions, HttpServer } from './types';
 import { addFirstSlash, removeLastSlash } from './router/lib/addSlash';
 import { sendData } from './server/sendData';
@@ -32,11 +30,13 @@ interface TscOption {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const HotReloadDefault = 33730;
+let HotReloadDefault = 33730;
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const ssrsx = (ssrsxOption?: SsrsxOptions) => {
+
+  const HotReload = HotReloadDefault++;
 
   //////////////////////////////////////////////////////////////////////////////
 
@@ -79,7 +79,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
   // for hot reload
 
   if(option?.hotReload){
-    const port = (typeof option.hotReload === 'boolean')? HotReloadDefault: option.hotReload;
+    const port = (typeof option.hotReload === 'boolean')? HotReload: option.hotReload;
     log('Hot reload start:', port);
     new Server({ port });
   }
@@ -98,6 +98,10 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     }
     const targetMapPath = path.join(clientRoot.slice(0, -clientOffset.length), url);
     if(!fs.existsSync(targetMapPath)){
+      return false;
+    }
+
+    if(targetMapPath.indexOf(clientRoot) !== 0){
       return false;
     }
 
@@ -143,7 +147,6 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     }
 
     const targetPathname = url.replace(RegExp(`^${ssrsxBaseUrl}`), '');
-    //const targetPathname = url.replace(ssrsxBaseUrl, '');
 
     // requireJs
     if(targetPathname === requireJs){
@@ -159,22 +162,10 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
 
     // event loader
     if(targetPathname === eventLoaderJs){
-      const requireJsOptions = {
-        baseUrl: ssrsxBaseUrl,
-        urlArgs: 't=' + bust,
-        paths: option?.requireJsPaths,
-      };
       sendData(server, {
         status: 200,
         type: 'text/javascript',
-        body: `${getLoadEventsJs()}
-        var ssrsxOptions = {
-          events: ${JSON.stringify(events)},
-          hotReload: ${option?.hotReload? HotReloadDefault: false},
-          hotReloadWait: ${option?.hotReloadWait ?? 1000},
-          requireJsConfig: ${JSON.stringify(requireJsOptions)},
-        }
-        `,
+        body: getLoadEventsJs(),
         source: targetPathname,
         contentsDate: serviceStartDateTime,
       });
@@ -197,14 +188,16 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     // requireJsRoot
     const requireJsFile = path.join(requireJsRoot, targetPathname);
     if(fs.existsSync(requireJsFile)){
-      sendData(server, {
-        status: 200,
-        type: 'text/javascript',
-        body: fs.readFileSync(requireJsFile).toString(),
-        source: requireJsFile,
-        contentsDate: serviceStartDateTime,
-      });
-      return true;
+      if(requireJsFile.indexOf(requireJsRoot) === 0){
+        sendData(server, {
+          status: 200,
+          type: 'text/javascript',
+          body: fs.readFileSync(requireJsFile).toString(),
+          source: requireJsFile,
+          contentsDate: serviceStartDateTime,
+        });
+        return true;
+      }
     }
 
     // error
@@ -225,14 +218,16 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     //
     const url = getPathname(server);
     // static file route
-    //const filepath = path.join(clientRoot, url.replace(baseUrl, ''));
     const filepath = path.join(clientRoot, url.replace(RegExp(`^${baseUrl}`), ''));
-    //const filepath = path.replace(RegExp(`^${baseUrl}`), '');
     const ext = path.extname(filepath);
     if(ext === '.ts' || ext === '.tsx' ||
       !fs.existsSync(filepath) ||
       fs.lstatSync(filepath).isDirectory()
     ){
+      return false;
+    }
+    //
+    if(filepath.indexOf(clientRoot) !== 0){
       return false;
     }
     //
@@ -249,9 +244,9 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
   //////////////////////////////////////////////////////////////////////////////
   // app
 
-  const addStyles = (body: string) => {
+  const addStyles = (body: string, styles: string) => {
     // add styles
-    const addStyle = `<style>${getStyles()}</style>`;
+    const addStyle = `<style>${styles}</style>`;
     // find /head
     const headCloseTag = /<(\s*)\/(\s*)head(\s*)>/i;
     // insert style
@@ -260,11 +255,26 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
 
   /////////////////////////////////////////
 
-  const addScripts = (body: string) => {
+  //let events: ElementEvent[] = [];
+
+  const addScripts = (body: string, events: ElementEvent[]) => {
+    const requireJsOptions = {
+      baseUrl: ssrsxBaseUrl,
+      urlArgs: 't=' + bust,
+      paths: option?.requireJsPaths,
+    };
     // add scripts
     const addScript = `
     <script src="${ssrsxBaseUrl}${requireJs}"></script>
     <script src="${ssrsxBaseUrl}${eventLoaderJs}"></script>
+    <script>
+    ssrsxOptions = {
+      events: ${JSON.stringify(events)},
+      hotReload: ${option?.hotReload? HotReload: false},
+      hotReloadWait: ${option?.hotReloadWait ?? 1000},
+      requireJsConfig: ${JSON.stringify(requireJsOptions)},
+    };
+    </script>
     `;
     // find /body
     const bodyCloseTag = /<(\s*)\/(\s*)body(\s*)>/i;
@@ -288,11 +298,9 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     // userContext
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
     const userContext = option?.context? option.context(server as any): undefined;
-
-    initializeStyles();
-    initializeParse();
     //
     const result = await parse(option.app, server, userContext, baseUrl);
+    //events = result.context.events;
     if(result.context.parseContext.global.redirect){
       return true;
     }
@@ -300,7 +308,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     sendData(server, {
       status: 200,
       type: 'text/html',
-      body: addScripts(addStyles(result.body)),
+      body: addScripts(addStyles(result.body, result.context.styles.join('\n')), result.context.events),
       source: url,
     });
     //

@@ -1,6 +1,6 @@
 import { Redirect, useBody } from '../../index';
 import { loginUser } from './session';
-import { LoginInfo } from './Index';
+import { LoginInfo } from './LoginForm';
 import { UserContext } from './AppRouter';
 
 const Login = () => {

@@ -1,3 +1,5 @@
+////////////////////////////////////////////////////////////////////////////////
+
 const camel2Kebabu = (p: string): string => {
   const pp = p.charAt(0).toLowerCase() + p.substring(1);
   return pp.replace(/([A-Z])/g,
@@ -14,5 +16,7 @@ const kebabu2Camel = (p: string): string => {
     }
   );
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 export { camel2Kebabu, kebabu2Camel };

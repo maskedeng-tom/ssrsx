@@ -7,7 +7,7 @@ interface LoginInfo {
   password: string;
 }
 
-const Index = () => {
+const LoginForm = () => {
 
   useGlobalStyle({
     '.login-form': {
@@ -42,6 +42,12 @@ const Index = () => {
   }
 
   return <>
+
+    <hr/>
+    <div onClick="page1.onClick">
+      CLICK ME!
+    </div>
+
     <div className="login-form">
       <div style={{textAlign: 'center'}}>Login</div>
       <form method="post" action='/login'>
@@ -52,7 +58,7 @@ const Index = () => {
         </div>
         <div>
           <label>Password:
-            <input type="password" name="password" onInput="index.onInputPassword"/>
+            <input type="password" name="password" onInput="index.onInputPassword" value="pass1232k4jlk"/>
           </label>
         </div>
         <div>
@@ -63,5 +69,5 @@ const Index = () => {
   </>;
 };
 
-export default Index;
+export default LoginForm;
 export type { LoginInfo };

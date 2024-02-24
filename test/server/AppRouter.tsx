@@ -3,7 +3,7 @@ import { Router, Routes, Route } from '../../index';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-import Index from './Index';
+import LoginForm from './LoginForm';
 import Login from './Login';
 import Logout from './Logout';
 import App from './App';
@@ -65,7 +65,7 @@ const AppRouter = () => {
               <Routes>
 
                 <Route path="/">
-                  <Index/>
+                  <LoginForm/>
                 </Route>
 
                 <Route path="free">

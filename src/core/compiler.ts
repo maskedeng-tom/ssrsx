@@ -65,6 +65,10 @@ const createCompiler = (clientRoot: string, workRoot: string, tscOptions: TscOpt
       }
     }
 
+    if(tsPath.indexOf(clientRoot) !== 0){
+      return false;
+    }
+
     // compile
     const outputFileName = path.join(workRoot, changeExt(jsUrl, '.client.js'));
     //

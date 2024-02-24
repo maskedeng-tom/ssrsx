@@ -1,6 +1,7 @@
 import { getLoginUser } from './session';
 import { UserContext } from './AppRouter';
-import { useScopedStyle, Redirect, /*routerPath, */Link, useLocation } from '../../index';
+import { useScopedStyle, Redirect, Link, useLocation, useContext } from '../../index';
+import Menu from './Menu';
 
 const App = () => {
 
@@ -10,6 +11,8 @@ const App = () => {
     }
   });
 
+  const context = useContext<UserContext>();
+
   const user = getLoginUser();
   if(!user?.username){
     return <Redirect to="/"/>;
@@ -17,13 +20,16 @@ const App = () => {
 
   return <>
     <div {...scope}>
-      APP - {user?.username}
+      APP - {user?.username} - {JSON.stringify(context)}
     </div>
     <div>
-      <Link href='/logout' area-context="aaa">Logout</Link>
+      <Link to='/logout' area-context="aaa">Logout</Link>
     </div>
     <div>
-      <Link tag="button" href={'/sub'}>SUB</Link>
+      <Link tag="button" to={'/sub'}>SUB</Link>
+    </div>
+    <div>
+      <Menu/>
     </div>
   </>;
 };

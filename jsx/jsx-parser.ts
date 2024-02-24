@@ -1,8 +1,8 @@
-import { createUid, events } from '../src/core/eventSupport';
 import { styleToString } from '../src/styleToString/styleToString';
 import { SassStyles } from '../src/styleToString/cssTypes';
 import { Fragment, VirtualElement, VirtualChildren } from './jsx-runtime';
 import { HttpServer } from '../src/types';
+import { resetShortId, shortId } from '../src/lib/shortId';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -14,19 +14,22 @@ const getCurrentSsrsx = <C = unknown>(): SsrsxContext<C> | undefined => {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const parseAttributes = (tagname: string, attributes?: {[key:string]: unknown}): string | undefined => {
+const parseAttributes = (tagname: string, attributes: {[key:string]: unknown} | undefined, ssrsx: SsrsxContext): string | undefined => {
   //
   if(!attributes){
     return;
   }
   //
-  const uid = createUid();
+  const uid = shortId('ev');
   //
   let needUid = false;
   const result: string[] = [];
   for(const key in attributes){
     const attribute = attributes[key];
     //
+    if(attribute === undefined || attribute === null){
+      continue;
+    }
     if(key === '_ssrsxFunctions'){
       continue;
     }
@@ -37,7 +40,7 @@ const parseAttributes = (tagname: string, attributes?: {[key:string]: unknown}):
       key === 'formAction' ||
       key === 'icon'
     ){
-      const baseUrl = currentSsrsx?.baseUrl ?? '';
+      const baseUrl = ssrsx.baseUrl;
       const value = String(attribute);
       const href = (value.slice(0,1) === '/')?`${baseUrl}${value}` : value;
       result.push(`${key}="${href}"`);
@@ -45,7 +48,6 @@ const parseAttributes = (tagname: string, attributes?: {[key:string]: unknown}):
     }
     //
     if(key.slice(0, 2) === 'on'){
-      //
       if(String(attribute).indexOf('javascript:') === 0){
         // inline js
         const js = String(attribute).slice(11);
@@ -58,7 +60,7 @@ const parseAttributes = (tagname: string, attributes?: {[key:string]: unknown}):
         const target = uid;
         const event = key.slice(2).toLowerCase();
         const [module, f] = String(attribute).split('.');
-        events.push({target, event, module, f: f ?? key});
+        ssrsx.events.push({target, event, module, f: f ?? key});
         needUid = true;
       }
       continue;
@@ -87,16 +89,24 @@ const parseAttributes = (tagname: string, attributes?: {[key:string]: unknown}):
     //
     result.push(`${key}="${String(attribute)}"`);
   }
-  if(result.length === 0){
-    return '';
-  }
   if(needUid){
     result.push(`data-ssrsx-event="${uid}"`);
+  }
+  if(result.length === 0){
+    return '';
   }
   return ` ${result.join(' ')}`;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+
+interface ElementEvent {
+  target: string,
+  event: string,
+  //
+  module: string,
+  f: string,
+}
 
 interface GlobalParseContext {
   redirect?: boolean;
@@ -110,15 +120,19 @@ interface SsrsxContext<C = unknown> {
     [key: string]: unknown
   };
   server: HttpServer;
+  //
+  styles: string[];
+  events: ElementEvent[];
+  //
 }
 
 interface SsrsxFunctions {
-  finalize?: () => VirtualChildren | Promise<VirtualChildren> | void | Promise<void>;
+  finalize: () => VirtualChildren | Promise<VirtualChildren> | void | Promise<void>;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const parseCore = async (root: VirtualChildren): Promise<string> => {
+const parseCore = async (root: VirtualChildren, ssrsx: SsrsxContext): Promise<string> => {
   if(!root){
     return '';
   }
@@ -126,7 +140,7 @@ const parseCore = async (root: VirtualChildren): Promise<string> => {
   if(Array.isArray(root)){
     const result: string[] = [];
     for(const child of root as VirtualChildren[]){
-      result.push(await parseCore(child));
+      result.push(await parseCore(child, ssrsx));
     }
     return result.join('');
   }
@@ -140,7 +154,7 @@ const parseCore = async (root: VirtualChildren): Promise<string> => {
 
   const ve = await (root as Promise<VirtualElement>);
   if(ve.fragment){
-    return await parseCore(ve.children);
+    return await parseCore(ve.children, ssrsx);
   }
   if(ve.f){
     const _ssrsxFunctions: SsrsxFunctions = {finalize: () => {}};
@@ -151,23 +165,25 @@ const parseCore = async (root: VirtualChildren): Promise<string> => {
     }catch(e){
       console.error(e); // TODO error report
     }
+    const result = await parseCore(funcResult, ssrsx);
     //
-    const result = await parseCore(funcResult);
-    const finalResult = _ssrsxFunctions.finalize?.();
-    //
+    const finalResult = _ssrsxFunctions.finalize();
     if(finalResult){
-      return await parseCore(finalResult);
+      return await parseCore(finalResult, ssrsx);
     }
     return result;
   }
   if(ve.tag){
-    return `<${ve.tag}${parseAttributes(ve.tag, ve.attributes)}>${await parseCore(ve.children)}</${ve.tag}>`;
+    return `<${ve.tag}${parseAttributes(ve.tag, ve.attributes, ssrsx)}>${await parseCore(ve.children, ssrsx)}</${ve.tag}>`;
   }
 
   return '';
 };
 
 const parse = async (root: JSX.Children, httpServer: HttpServer, userContext: unknown, baseUrl: string): Promise<{body: string, context: SsrsxContext}> => {
+  //
+  resetShortId();
+  //
   const ssrsx: SsrsxContext = {
     baseUrl,
     context: userContext,
@@ -175,13 +191,19 @@ const parse = async (root: JSX.Children, httpServer: HttpServer, userContext: un
       global: {},
     },
     server: httpServer,
+    //
+    styles: [],
+    events: [],
   };
   currentSsrsx = ssrsx;
-  return {body: await parseCore(root), context: ssrsx};
+  return {
+    body: await parseCore(root, ssrsx),
+    context: ssrsx
+  };
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { Fragment, parse };
-export type { SsrsxContext, SsrsxFunctions, GlobalParseContext };
+export type { SsrsxContext, SsrsxFunctions, GlobalParseContext, ElementEvent };
 export { getCurrentSsrsx };

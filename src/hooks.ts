@@ -1,7 +1,9 @@
-import { setGlobalStyle, setScopedStyle } from './core/cssSupport';
+import { getCurrentSsrsx } from 'jsx/jsx-parser';
 import { getBody, getContext, getHttpServer, getServer, getSession } from './server/support';
 import { SassStyles } from './styleToString/cssTypes';
 import { KoaServer, ExpressServer } from './types';
+import { styleToString } from './styleToString/styleToString';
+import { shortId } from './lib/shortId';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -36,11 +38,15 @@ const useContext = <T = any>() => {
 ////////////////////////////////////////////////////////////////////////////////
 
 const useGlobalStyle = (style: SassStyles) => {
-  return setGlobalStyle(style);
+  const ssrsx = getCurrentSsrsx();
+  ssrsx?.styles.push(styleToString(style));
 };
 
 const useScopedStyle = (style: SassStyles) => {
-  return setScopedStyle(style);
+  const scope = shortId('sc');
+  const ssrsx = getCurrentSsrsx();
+  ssrsx?.styles.push(styleToString(style, `data-ssrsx-css="${scope}"`));
+  return {'data-ssrsx-css': scope};
 };
 
 ////////////////////////////////////////////////////////////////////////////////

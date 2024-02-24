@@ -12,10 +12,10 @@ const Free = () => {
       <img src="/assets/image.jpg?a=3"/>
     </div>
     <div>
-      <Link tag="a" href={'/logout'}>Logout</Link>
+      <Link tag="a" to={'/logout'}>Logout</Link>
     </div>
     <div>
-      <Link tag="a" href={'/app'}>App</Link>
+      <Link tag="a" to={'/app'}>App</Link>
     </div>
   </>;
 };

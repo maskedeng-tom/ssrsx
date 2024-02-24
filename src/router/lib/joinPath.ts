@@ -1,9 +1,10 @@
+import path from 'path';
 import { addLastSlash, removeFirstSlash } from './addSlash';
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const joinPath = (...paths: string[]) => {
-  return paths.map((path, i) => {
+  return path.normalize(paths.map((path, i) => {
     if(i === 0){
       return addLastSlash(path);
     }
@@ -12,7 +13,7 @@ const joinPath = (...paths: string[]) => {
     }else{
       return removeFirstSlash(addLastSlash(path));
     }
-  }).join('');
+  }).join(''));
 };
 
 ////////////////////////////////////////////////////////////////////////////////

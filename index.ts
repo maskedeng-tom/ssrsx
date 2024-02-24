@@ -13,9 +13,8 @@ import {
 import { Router } from './src/router/Router';
 import { Routes } from './src/router/Routes';
 import { Route } from './src/router/Route';
-import { Redirect } from './src/router/Redirect';
-import { Link } from './src/router/Link';
-//import { routerPath } from './src/router/routerPath';
+import { Redirect, Navigate } from './src/router/Redirect';
+import { Link, NavLink } from './src/router/Link';
 //
 import {
   useServer,
@@ -39,9 +38,8 @@ export {
   Router,
   Routes,
   Route,
-  Redirect,
-  Link,
-  //routerPath,
+  Redirect, Navigate,
+  Link, NavLink,
 };
 //
 export {
