@@ -44,7 +44,7 @@ const LoginForm = () => {
   return <>
 
     <hr/>
-    <div onClick="page1.onClick">
+    <div onClick="js://page1.onClick">
       CLICK ME!
     </div>
 
@@ -53,12 +53,12 @@ const LoginForm = () => {
       <form method="post" action='/login'>
         <div>
           <label>Username:
-            <input type="text" id="username" name="username" onInput="index.onInputUsername" value="def"/>
+            <input type="text" id="username" name="username" onInput="js://index.onInputUsername" value="def"/>
           </label>
         </div>
         <div>
           <label>Password:
-            <input type="password" name="password" onInput="index.onInputPassword" value="pass1232k4jlk"/>
+            <input type="password" name="password" onInput="js://index.onInputPassword" value="pass1232k4jlk"/>
           </label>
         </div>
         <div>

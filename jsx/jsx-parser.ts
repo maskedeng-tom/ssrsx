@@ -48,13 +48,47 @@ const parseAttributes = (tagname: string, attributes: {[key:string]: unknown} | 
     }
     //
     if(key.slice(0, 2) === 'on'){
+      if(String(attribute).indexOf('js://') === 0){
+        const jsLink = String(attribute).slice(5);
+        //if(String(attribute).indexOf('javascript:') === 0){
+        // inline js
+        //const js = String(attribute).slice(11);
+
+
+        //result.push(`${key}="${js}"`);
+        /*}else*/
+        //if(String(attribute).indexOf('js:') === 0){
+        //  jsLink = String(attribute).slice(3);
+
+
+        //result.push(`${key}="${js}"`);
+        //}
+
+
+        const target = uid;
+        const event = key.slice(2).toLowerCase();
+        const [module, f] = jsLink.split('.');
+        ssrsx.events.push({target, event, module, f: f ?? key});
+        needUid = true;
+
+
+
+      }else{
+        // inline js
+        result.push(`${key}="${String(attribute)}"`);
+      }
+      /*
       if(String(attribute).indexOf('javascript:') === 0){
         // inline js
         const js = String(attribute).slice(11);
+
+
         result.push(`${key}="${js}"`);
       }else if(String(attribute).indexOf('js:') === 0){
         // inline js
         const js = String(attribute).slice(3);
+
+
         result.push(`${key}="${js}"`);
       }else{
         const target = uid;
@@ -63,6 +97,7 @@ const parseAttributes = (tagname: string, attributes: {[key:string]: unknown} | 
         ssrsx.events.push({target, event, module, f: f ?? key});
         needUid = true;
       }
+      */
       continue;
     }
     //
