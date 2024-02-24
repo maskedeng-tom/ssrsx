@@ -1,4 +1,4 @@
-# Server Side Renderer with tsx,jsx
+# Server Side Renderer with tsx
 
 [![npm version](https://badge.fury.io/js/%40maskedeng-tom%2Fssrsx.svg)](https://badge.fury.io/js/%40maskedeng-tom%2Fssrsx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -14,9 +14,9 @@
   - [start application](#start-application)
 - [with express](#with-express)
 - [with Router](#with-router)
-- [with client script](#with-client-script)
+- [with Client script](#with-client-script)
 - [with jQuery](#with-jquery)
-- [with jQuery with CDN](#with-jquery-with-cdn)
+- [with jQuery from CDN](#with-jquery-from-cdn)
 - [use POST method](#use-post-method)
   - [express body parser](#express-body-parser)
 - [use session](#use-session)
@@ -208,7 +208,7 @@ app.listen(3000);
 
 -----
 
-## with client script
+## with Client script
 
 ### create client script folder
 
@@ -232,7 +232,7 @@ export { onClick }; // need export! important!
 
 ### server side
 
-  - `js://` is a protocol to call client script function from ssrsx.
+- `js://` is a protocol to call client script function from ssrsx.
 
     `js://[client module name].[exported function name]`
 
