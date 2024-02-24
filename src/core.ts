@@ -66,7 +66,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
   const workRoot = getDir(option?.workRoot, './.ssrsx');
   const clientRoot = getDir(option?.clientRoot, './src/client');
   const clientOffset = clientRoot.replace(RegExp(`^${process.cwd()}`), '');
-  const requireJsRoot = getDir(option?.requireJsRoot, clientRoot);
+  const requireJsRoot = getDir(option?.requireJsRoot, option?.clientRoot ?? './src/client');
   const baseUrl = removeLastSlash(addFirstSlash(option?.baseUrl ?? ''));
   log('workRoot:', workRoot);
   log('requireJsRoot:', requireJsRoot);
