@@ -1,5 +1,6 @@
 # Server Side Renderer with tsx
 
+[![GitHub version](https://badge.fury.io/gh/maskedeng-tom%2Fssrsx.svg)](https://badge.fury.io/gh/maskedeng-tom%2Fssrsx)
 [![npm version](https://badge.fury.io/js/%40maskedeng-tom%2Fssrsx.svg)](https://badge.fury.io/js/%40maskedeng-tom%2Fssrsx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

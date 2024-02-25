@@ -114,7 +114,7 @@ const startSample = () => {
   app.keys = ['f6fba634-dedb-9d6c-c1de-acd2196e3786'];
   app.use(session(app));
   app.use(bodyParser());
-  /*
+
   app.use(async (ctx, next) => {
     await next();
     ctx.res.removeHeader('x-powered-by');
@@ -134,7 +134,6 @@ const startSample = () => {
       ],
     }})(ctx, next) as Koa.Middleware;
   });
-  */
 
   app.use(ssrsxKoa({
     development: true,
@@ -145,12 +144,9 @@ const startSample = () => {
   app.listen(3000);
 
 };
-startSample();
-
+//startSample();
 
 ////////////////////////////////////////////////////////////////////////////////
-
-
 
 import AppRouter, { UserContext } from './server/AppRouter';
 
@@ -170,20 +166,21 @@ const startServerKoa = () => {
     ctx.res.removeHeader('x-powered-by');
   });
 
-  //if(process.env.NODE_ENV === 'production'){
-  app.use(helmet());
-  app.use((ctx, next) => {
-    ctx.state.nonce = crypto.randomBytes(16).toString('base64');
-    return helmet.contentSecurityPolicy({ directives: {
-      defaultSrc: ['\'self\'','ws'],
-      connectSrc: ['\'self\'','ws://*:*'],
-      scriptSrc: [
-        '\'self\'',
-        `'nonce-${ctx.state.nonce}'`,
-        //'https://code.jquery.com/jquery-3.7.1.min.js'
-      ],
-    }})(ctx, next) as Koa.Middleware;
-  });
+  if(process.env.NODE_ENV === 'production'){
+    app.use(helmet());
+    app.use((ctx, next) => {
+      ctx.state.nonce = crypto.randomBytes(16).toString('base64');
+      return helmet.contentSecurityPolicy({ directives: {
+        defaultSrc: ['\'self\'','ws'],
+        connectSrc: ['\'self\'','ws://*:*'],
+        scriptSrc: [
+          '\'self\'',
+          `'nonce-${ctx.state.nonce}'`,
+          //'https://code.jquery.com/jquery-3.7.1.min.js'
+        ],
+      }})(ctx, next) as Koa.Middleware;
+    });
+  }
 
   app.use(ssrsxKoa({
     baseUrl: '/a',
@@ -193,7 +190,8 @@ const startServerKoa = () => {
     requireJsPaths: {
       'jquery': 'jquery.min',
     },
-    context: (): UserContext => {
+    context: (ctx, next): UserContext => {
+      console.log('=KOA=>', ctx, next);
       return {
         db: 'DB',
       };
@@ -217,22 +215,23 @@ const startServerExpress = () => {
     cookie: { secure: false }
   }));
 
-  //if(process.env.NODE_ENV === 'production'){
-  app.use(expressHelmet());
-  app.use((req, res, next) => {
-    (res as express.Response).locals.nonce = crypto.randomBytes(16).toString('base64');
-    expressHelmet.contentSecurityPolicy({ directives: {
-      defaultSrc: ['\'self\'','ws'],
-      connectSrc: ['\'self\'','ws://*:*'],
-      scriptSrc: [
-        '\'self\'',
-        (req, res) => `'nonce-${(res as express.Response).locals?.nonce}'`,
-        //'https://code.jquery.com/jquery-3.7.1.min.js'
-      ],
-    }})(req, res, next);
-  });
+  if(process.env.NODE_ENV === 'production'){
+    app.use(expressHelmet());
+    app.use((req, res, next) => {
+      (res as express.Response).locals.nonce = crypto.randomBytes(16).toString('base64');
+      expressHelmet.contentSecurityPolicy({ directives: {
+        defaultSrc: ['\'self\'','ws'],
+        connectSrc: ['\'self\'','ws://*:*'],
+        scriptSrc: [
+          '\'self\'',
+          (req, res) => `'nonce-${(res as express.Response).locals?.nonce}'`,
+          //'https://code.jquery.com/jquery-3.7.1.min.js'
+        ],
+      }})(req, res, next);
+    });
+  }
 
-  app.use(function (req, res, next) {
+  app.use((req, res, next) => {
     res.removeHeader('x-powered-by');
     next();
   });
@@ -249,7 +248,8 @@ const startServerExpress = () => {
     requireJsPaths: {
       'jquery': 'jquery.min',
     },
-    context: (): UserContext => {
+    context: (req, res, next): UserContext => {
+      console.log('=EXPRESS=>', req, res, next);
       return {
         db: 'DB',
       };
@@ -260,5 +260,5 @@ const startServerExpress = () => {
   app.listen(3001);
 };
 
-//startServerKoa();
-//startServerExpress();
+startServerKoa();
+startServerExpress();

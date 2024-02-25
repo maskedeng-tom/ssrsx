@@ -17,7 +17,10 @@ interface SsrsxOptions<USER_CONTEXT = unknown> {
   //
   cacheControlMaxAge?: number;
   //
-  context?: ((server: KoaServer) => USER_CONTEXT) | ((server: ExpressServer) => USER_CONTEXT);
+  context?:
+    ((ctx: Koa.Context, next: Koa.Next) => USER_CONTEXT) |
+    ((req: express.Request, res: express.Response, next: express.NextFunction) => USER_CONTEXT)
+  ;
   app?: VirtualElement;
   // for development
   sourceMap?: boolean;

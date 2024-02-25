@@ -5,7 +5,11 @@ import { ssrsx } from './core';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const ssrsxKoa = (ssrsxOption?: SsrsxOptions) => {
+interface SsrsxOptionsKoa<USER_CONTEXT = unknown> extends SsrsxOptions<USER_CONTEXT> {
+  context?: (ctx: Koa.Context, next: Koa.Next) => USER_CONTEXT;
+}
+
+const ssrsxKoa = <T = unknown>(ssrsxOption?: SsrsxOptionsKoa<T>) => {
   //
   const handler = ssrsx(ssrsxOption);
   //
@@ -20,7 +24,11 @@ const ssrsxKoa = (ssrsxOption?: SsrsxOptions) => {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const ssrsxExpress = (ssrsxOption?: SsrsxOptions) => {
+interface SsrsxOptionsExpress<USER_CONTEXT = unknown> extends SsrsxOptions<USER_CONTEXT> {
+  context?: (req: express.Request, res: express.Response, next: express.NextFunction) => USER_CONTEXT;
+}
+
+const ssrsxExpress = <T = unknown>(ssrsxOption?: SsrsxOptionsExpress<T>) => {
   //
   const handler = ssrsx(ssrsxOption);
   //
@@ -38,3 +46,4 @@ const ssrsxExpress = (ssrsxOption?: SsrsxOptions) => {
 ////////////////////////////////////////////////////////////////////////////////
 
 export { ssrsxKoa, ssrsxExpress };
+export type { SsrsxOptionsKoa, SsrsxOptionsExpress };

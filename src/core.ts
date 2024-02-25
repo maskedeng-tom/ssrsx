@@ -13,6 +13,7 @@ import { SsrsxOptions, HttpServer, isKoaServer, isExpressServer } from './types'
 import { addFirstSlash, removeLastSlash } from './router/lib/addSlash';
 import { sendData } from './server/sendData';
 import { getPathname } from './server/support';
+import { SsrsxOptionsExpress, SsrsxOptionsKoa } from '.';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -303,8 +304,15 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     }
 
     // userContext
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-    const userContext = option?.context? option.context(server as any): undefined;
+    let userContext: unknown = undefined;
+    if(isKoaServer(server)){
+      const optionKoa = option as SsrsxOptionsKoa;
+      userContext = optionKoa.context?.(server.koa!.ctx, server.koa!.next);
+    }
+    if(isExpressServer(server)){
+      const optionExpress = option as SsrsxOptionsExpress;
+      userContext = optionExpress.context?.(server.express!.req, server.express!.res, server.express!.next);
+    }
     //
     const result = await parse(option.app, server, userContext, baseUrl);
     //events = result.context.events;
