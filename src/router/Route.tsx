@@ -9,10 +9,11 @@ import { RouterContext } from './Router';
 ////////////////////////////////////////////////////////////////////////////////
 
 const Route = ({
-  path, sensitive, children, _ssrsxFunctions
+  path, sensitive, element, children, _ssrsxFunctions
 }:{
   path: string,
   sensitive?: boolean,
+  element?:VirtualChildren,
   children?: VirtualChildren,
   _ssrsxFunctions?: SsrsxFunctions
 }) => {
@@ -24,12 +25,19 @@ const Route = ({
     return <></>;
   }
 
+  let targetPath = path;
+
   // all
-  if(path === '*'){
+  if(targetPath === '*'){
     if(parseContext.routes){
       parseContext.routes.resolved = true;
     }
-    return <>{children}</>;
+    return <>{children ?? element}</>;
+  }
+
+  // ?????/*
+  if(targetPath.slice(-2) === '/*'){
+    targetPath = `${targetPath.slice(0, -2)}/(.*)`;
   }
 
   // get url
@@ -39,7 +47,7 @@ const Route = ({
   const base = parseContext.matched;
 
   // test match
-  const match = matchPath(removeFirstSlash(path), url.slice(base.length), {sensitive: sensitive ?? false});
+  const match = matchPath(removeFirstSlash(targetPath), url.slice(base.length), {sensitive: sensitive ?? false});
   if(!match.match && !match.subMatch){
     return <></>;
   }
@@ -58,7 +66,7 @@ const Route = ({
   Object.assign(parseContext.params, match.params);
 
   // output
-  const result = <>{children}</>;
+  const result = <>{children ?? element}</>;
   if(_ssrsxFunctions){
     _ssrsxFunctions.finalize = () => {
       parseContext.matched = base;

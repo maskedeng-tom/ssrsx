@@ -68,9 +68,7 @@ const AppRouter = () => {
                   <LoginForm/>
                 </Route>
 
-                <Route path="free">
-                  <Free/>
-                </Route>
+                <Route path="free" element={<Free/>}/>
 
                 <Route path="free/:pppp">
                   <FreeEx/>
