@@ -1,6 +1,5 @@
 # Server Side Renderer with tsx
 
-[![GitHub version](https://badge.fury.io/gh/maskedeng-tom%2Fssrsx.svg)](https://badge.fury.io/gh/maskedeng-tom%2Fssrsx)
 [![npm version](https://badge.fury.io/js/%40maskedeng-tom%2Fssrsx.svg)](https://badge.fury.io/js/%40maskedeng-tom%2Fssrsx)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -24,6 +23,10 @@
 - [with CSP (Content Security Policy)](#with-csp-content-security-policy)
   - [CSP with Koa](#csp-with-koa)
   - [CSP with express](#csp-with-express)
+- [user Context](#user-context)
+  - [for Koa](#for-koa)
+  - [for Express](#for-express)
+- [async Component](#async-component)
 - [Contributing](#contributing)
 - [Credits](#credits)
 - [Authors](#authors)
@@ -661,6 +664,122 @@ if(process.env.NODE_ENV === 'production'){
   });
 }
 ...
+```
+
+-----
+
+## User Context
+
+User context can be set with the `context` property of the `ssrsx(Koa or Express)` function.
+
+The `context` function is called every time it is rendered.
+
+You can use the `useContext` function to get the user context value.
+
+### for Koa
+
+```tsx
+interface UserContext {
+  lang: string;
+}
+
+const App = () => {
+  const user = useContext<{UserContext}>();
+  return <div>Lang: {user.lang}</div>;
+};
+
+...
+
+app.use(ssrsxKoa({
+  ...
+  context: (ctx, next): UserContext => {
+    return {
+      lang: 'en',
+    };
+  },
+}));
+```
+
+### for Express
+
+```tsx
+interface UserContext {
+  lang: string;
+}
+
+const App = () => {
+  const user = useContext<{UserContext}>();
+  return <div>Lang: {user.lang}</div>;
+};
+
+...
+
+app.use(ssrsxExpress({
+  ...
+  context: (req, res, next): UserContext => {
+    return {
+      lang: 'en',
+    };
+  },
+}));
+```
+
+-----
+
+## async Component
+
+In Ssrsx, you cannot perform asynchronous processing using `useState` or `useEffect` etc. , but you can create asynchronous components.
+
+The ssrsx `context` function is called every time it is rendered, so when specifying something like a database instance, create the instance externally and specify it in the `context` function.
+
+```tsx
+import { Redis } from 'ioredis';
+
+interface UserContext {
+  redis: Redis;
+}
+
+const isAuthorized = async (username: string, password: string) => {
+  const context = useContext<UserContext>();
+  const value = await context.redis.get(username);
+  return value === password;
+};
+
+// async component
+const LoginCheck = async () => {
+  // post body data
+  const body = useBody<{username: string, password: string}>();
+
+  // check login
+  const isLogin = await isAuthorized(body.username, body.password);
+  if(!isLogin){
+    return <Navigate to="/"/>;
+  }
+
+  return <>
+    <h1>Login OK !</h1>
+    <div>
+      <div>Username: {body.username}</div>
+      <div>Password: {body.password}</div>
+    </div>
+    <Link to="/">Top</Link>
+  </>;
+};
+
+...
+
+// create redis instance
+const redis = new Redis();
+
+app.use(ssrsxKoa({
+  ...
+  context: (ctx, next): UserContext => {
+    return {
+      redis,
+    };
+  },
+}));
+
 ```
 
 -----

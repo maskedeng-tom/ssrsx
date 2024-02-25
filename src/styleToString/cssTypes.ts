@@ -61,7 +61,7 @@ interface CSSStyle {
   'maxHeight'?: 'none'|CSSString|CSSNumber;
   'minHeight'?: CSSString|CSSNumber;
   //
-  'margin'?: CSSString |
+  'margin'?: CSSString|CSSNumber|
     ['auto'|CSSString|CSSNumber,'auto'|CSSString|CSSNumber] |
     ['auto'|CSSString|CSSNumber,'auto'|CSSString|CSSNumber,'auto'|CSSString|CSSNumber,'auto'|CSSString|CSSNumber];
   'marginTop'?: 'auto'|CSSString|CSSNumber;
@@ -69,7 +69,7 @@ interface CSSStyle {
   'marginBottom'?: 'auto'|CSSString|CSSNumber;
   'marginLeft'?: 'auto'|CSSString|CSSNumber;
   //
-  'padding'?: CSSString|
+  'padding'?: CSSString|CSSNumber|
     ['auto'|CSSString|CSSNumber,'auto'|CSSString|CSSNumber] |
     ['auto'|CSSString|CSSNumber,'auto'|CSSString|CSSNumber,'auto'|CSSString|CSSNumber,'auto'|CSSString|CSSNumber];
   'paddingTop'?: CSSString|CSSNumber;
@@ -78,11 +78,11 @@ interface CSSStyle {
   'paddingLeft'?: CSSString|CSSNumber;
   //
   'border'?: CSSString | [CSSBorderWidth, CSSBorderStyle, CSSBorderColor];
-  'borderTop'?: CSSString;
-  'borderRight'?: CSSString;
-  'borderBottom'?: CSSString;
-  'borderLeft'?: CSSString;
-  'borderWidth'?: CSSString;
+  'borderTop'?: CSSString|CSSNumber;
+  'borderRight'?: CSSString|CSSNumber;
+  'borderBottom'?: CSSString|CSSNumber;
+  'borderLeft'?: CSSString|CSSNumber;
+  'borderWidth'?: CSSString|CSSNumber;
   'borderTopWidth'?: CSSBorderWidth;
   'borderRightWidth'?: CSSBorderWidth;
   'borderBottomWidth'?: CSSBorderWidth;

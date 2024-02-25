@@ -265,10 +265,10 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     //
     let nonce = '';
     if(isKoaServer(server)){
-      nonce = String(server.koa!.ctx.state.nonce);
+      nonce = server.koa!.ctx.state.nonce ? String(server.koa!.ctx.state.nonce) : '';
     }
     if(isExpressServer(server)){
-      nonce = String((server.express!.res).locals.nonce);
+      nonce = (server.express!.res).locals.nonce ? String((server.express!.res).locals.nonce) : '';
     }
     // add scripts
     const addScript = `
