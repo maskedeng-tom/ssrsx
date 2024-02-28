@@ -1,14 +1,13 @@
 import mime from 'mime-types';
-import debug from 'debug';
-const log = debug('ssrsx');
 import fs from 'fs';
 import path from 'path';
 import { Server } from 'ws';
+import { log } from './lib/log';
 import { getRequireJs, getLoadEventsJs } from './core/getJs';
 import { getDir } from './lib/getDir';
 import { createCompiler } from './core/compiler';
 import { errorConsole } from './lib/errorConsole';
-import { ElementEvent, parse } from '../jsx/jsx-parser';
+import { ElementEvent, parse } from 'jsx/jsx-parser';
 import { SsrsxOptions, HttpServer, isKoaServer, isExpressServer } from './types';
 import { addFirstSlash, removeLastSlash } from './router/lib/addSlash';
 import { sendData } from './server/sendData';
@@ -110,7 +109,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
       status: 200,
       type: 'text/plain',
       body: fs.readFileSync(targetMapPath).toString(),
-      contentsDate: fs.statSync(targetMapPath).mtime,
+      lastModified: fs.statSync(targetMapPath).mtime,
       source: targetMapPath,
     });
 
@@ -156,7 +155,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
         type: 'text/javascript',
         body: `${getRequireJs()}`,
         source: targetPathname,
-        contentsDate: serviceStartDateTime,
+        lastModified: serviceStartDateTime,
       });
       return true;
     }
@@ -168,7 +167,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
         type: 'text/javascript',
         body: getLoadEventsJs(),
         source: targetPathname,
-        contentsDate: serviceStartDateTime,
+        lastModified: serviceStartDateTime,
       });
       return true;
     }
@@ -181,7 +180,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
         type: 'text/javascript',
         body: js,
         source: targetPathname,
-        contentsDate: serviceStartDateTime,
+        lastModified: serviceStartDateTime,
       });
       return true;
     }
@@ -195,7 +194,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
           type: 'text/javascript',
           body: fs.readFileSync(requireJsFile).toString(),
           source: requireJsFile,
-          contentsDate: serviceStartDateTime,
+          lastModified: serviceStartDateTime,
         });
         return true;
       }
@@ -237,13 +236,20 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
       type: mime.lookup(path.extname(filepath).slice(1)) || 'text/plain',
       body: fs.readFileSync(filepath),
       source: filepath,
-      contentsDate: fs.statSync(filepath).mtime,
+      lastModified: fs.statSync(filepath).mtime,
     });
     return true;
   };
 
   //////////////////////////////////////////////////////////////////////////////
   // app
+
+  const addHead = (body: string, head: string) => {
+    // find /head
+    const headCloseTag = /<(\s*)\/(\s*)head(\s*)>/i;
+    // insert style
+    return `${String(body).replace(headCloseTag, `${head}</head>`)}`;
+  };
 
   const addStyles = (body: string, styles: string) => {
     // add styles
@@ -273,15 +279,17 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
     // add scripts
     const addScript = `
     <script src="${ssrsxBaseUrl}${requireJs}"></script>
-    <script src="${ssrsxBaseUrl}${eventLoaderJs}"></script>
     <script ${nonce? `nonce="${nonce}"` : ''}>
     ssrsxOptions = {
       events: ${JSON.stringify(events)},
       hotReload: ${option?.hotReload? HotReload: false},
       hotReloadWait: ${option?.hotReloadWait ?? 1000},
+      hotReloadWaitMax: ${option?.hotReloadWaitMax ?? 1000 * 5},
+      hotReloadWaitInclement: ${option?.hotReloadWaitInclement ?? 500},
       requireJsConfig: ${JSON.stringify(requireJsOptions)},
     };
     </script>
+    <script src="${ssrsxBaseUrl}${eventLoaderJs}"></script>
     `;
     //
     // find /body
@@ -303,6 +311,10 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
       return false;
     }
 
+    if(url.split('/').slice(-1).join('/') === 'favicon.ico'){
+      return false;
+    }
+
     // userContext
     let userContext: unknown = undefined;
     if(isKoaServer(server)){
@@ -313,11 +325,17 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
       const optionExpress = option as SsrsxOptionsExpress;
       userContext = optionExpress.context?.(server.express!.req, server.express!.res, server.express!.next);
     }
+
     //
     const result = await parse(option.app, server, userContext, baseUrl);
-    //events = result.context.events;
-    if(result.context.parseContext.global.redirect){
+    // global context
+    const globalContext = result.context.parseContext.global;
+    if(globalContext.redirect){
       return true;
+    }
+    //
+    if(globalContext.head){
+      result.body = addHead(result.body, (await parse(globalContext.head, server, userContext, baseUrl)).body);
     }
     //
     sendData(server, {
@@ -325,6 +343,7 @@ const ssrsx = (ssrsxOption?: SsrsxOptions) => {
       type: 'text/html',
       body: addScripts(server, addStyles(result.body, result.context.styles.join('\n')), result.context.events),
       source: url,
+      lastModified: globalContext.lastModified ?? serviceStartDateTime,
     });
     //
     return true;

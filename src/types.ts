@@ -26,6 +26,8 @@ interface SsrsxOptions<USER_CONTEXT = unknown> {
   sourceMap?: boolean;
   hotReload?: number | boolean;
   hotReloadWait?: number;
+  hotReloadWaitMax?: number;
+  hotReloadWaitInclement?: number;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

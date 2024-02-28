@@ -1,8 +1,11 @@
-var require;
-var ssrsxOptions;
+/*
+  eslint no-undef: 0
+*/
+//var require;
+//var ssrsxOptions;
 //
 var ssrsxEventLoaderInitialized = false;
-function ssrsxEventLoaderInitializer(cause){
+function ssrsxEventLoaderInitializer(){
   if(ssrsxEventLoaderInitialized){
     return;
   }
@@ -10,6 +13,24 @@ function ssrsxEventLoaderInitializer(cause){
   //
   //console.log('Initialize ssrsx client', cause);
   require.config(ssrsxOptions.requireJsConfig);
+  //
+  function checkWs(hotReloadWait){
+    const loc = location.hostname;
+    const sock = new WebSocket('ws://' + loc + ':' + ssrsxOptions.hotReload);
+    sock.addEventListener('open', function(){
+      location.reload(true);
+    });
+    sock.addEventListener('error', function(){
+      var ms = hotReloadWait + ssrsxOptions.hotReloadWaitInclement;
+      if(ms >= ssrsxOptions.hotReloadWaitMax){
+        ms = ssrsxOptions.hotReloadWaitMax;
+      }
+      console.log('Hot reload wait', ms, 'msec.');
+      setTimeout(function(){
+        checkWs(ms);
+      }, ms);
+    });
+  }
   //
   function addEvent(target, ev, mod, f){
     if(!target){return;}
@@ -33,19 +54,23 @@ function ssrsxEventLoaderInitializer(cause){
     const loc = location.hostname;
     const sock = new WebSocket('ws://' + loc + ':' + ssrsxOptions.hotReload);
     console.log('Hot reload. port =', ssrsxOptions.hotReload);
-    sock.addEventListener('close', e => {e; setTimeout(() => {location.reload(true);}, ssrsxOptions.hotReloadWait);});
+    sock.addEventListener('close', function(){
+      setTimeout(function(){
+        checkWs(ssrsxOptions.hotReloadWait);
+      }, ssrsxOptions.hotReloadWait);
+    });
   }
   //
 }
 function ssrsxStart(){
   addEventListener('load', function(){
-    ssrsxEventLoaderInitializer('load');
+    ssrsxEventLoaderInitializer();
   });
   addEventListener('readystatechange', function(){
-    ssrsxEventLoaderInitializer('readyStateChange');
+    ssrsxEventLoaderInitializer();
   });
   requestAnimationFrame(function(){
-    ssrsxEventLoaderInitializer('requestAnimationFrame');
+    ssrsxEventLoaderInitializer();
   });
 }
 ssrsxStart();

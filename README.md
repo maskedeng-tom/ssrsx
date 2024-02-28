@@ -835,3 +835,18 @@ app.use(ssrsxKoa({
 ## License
 
 [MIT License](https://github.com/maskedeng-tom/ssrsx/blob/main/LICENSE.txt) © Maskedeng Tom
+
+## TODOs
+
+BugFix
+
+- [x] `/(.*)`
+- [x] event-loader.js:12 Uncaught TypeError: Cannot read properties of undefined (reading 'requireJsConfig')
+
+Change
+
+- [x] ignore favicon.ico
+- [x] hot reload wait for ws started
+- [x] support Last-Modified
+- [x] useHead support
+- [x] nested css support -> useCSSNesting

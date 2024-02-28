@@ -11,7 +11,7 @@ interface SendData {
   type: string,
   body: unknown,
   headers?: {name: string, value: string}[],
-  contentsDate?: Date,
+  lastModified?: Date,
   source?: string,
   errorLog?: boolean,
 }
@@ -34,10 +34,10 @@ const sendDataKoa = (
   server.ctx.status = data.status;
   server.ctx.type = data.type;
   //
-  if(data.contentsDate){
+  if(data.lastModified){
     server.ctx.set('ETag', getUrl(httpServer));
     server.ctx.set('Cache-Control', 'max-age=0');
-    server.ctx.set('Last-Modified', data.contentsDate.toUTCString());
+    server.ctx.set('Last-Modified', data.lastModified.toUTCString());
     if(server.ctx.fresh){
       server.ctx.status = 304;
       log(server.ctx.method, data.status, server.ctx.url, data.source);
@@ -72,10 +72,10 @@ const sendDataExpress = (
   //
   server.res.set('content-type', data.type);
   //
-  if(data.contentsDate){
+  if(data.lastModified){
     server.res.set('ETag', getUrl(httpServer));
     server.res.set('Cache-Control', 'max-age=0');
-    server.res.set('Last-Modified', data.contentsDate.toUTCString());
+    server.res.set('Last-Modified', data.lastModified.toUTCString());
   }
   //
   server.res.status(data.status).send(data.body);

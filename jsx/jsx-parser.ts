@@ -1,6 +1,7 @@
-import { styleToString } from '../src/styleToString/styleToString';
-import { SassStyles } from '../src/styleToString/cssTypes';
-import { Fragment, VirtualElement, VirtualChildren } from './jsx-runtime';
+import { Fragment, VirtualElement, VirtualChildren } from 'jsx/jsx-runtime';
+import { logError } from '../src/lib/log';
+import { styleToString } from '../src/hooks/styleToString/styleToString';
+import { SassStyles } from '../src/hooks/styleToString/cssTypes';
 import { HttpServer } from '../src/types';
 import { resetShortId, shortId } from '../src/lib/shortId';
 
@@ -50,54 +51,17 @@ const parseAttributes = (tagname: string, attributes: {[key:string]: unknown} | 
     if(key.slice(0, 2) === 'on'){
       if(String(attribute).indexOf('js://') === 0){
         const jsLink = String(attribute).slice(5);
-        //if(String(attribute).indexOf('javascript:') === 0){
-        // inline js
-        //const js = String(attribute).slice(11);
-
-
-        //result.push(`${key}="${js}"`);
-        /*}else*/
-        //if(String(attribute).indexOf('js:') === 0){
-        //  jsLink = String(attribute).slice(3);
-
-
-        //result.push(`${key}="${js}"`);
-        //}
-
-
+        //
         const target = uid;
         const event = key.slice(2).toLowerCase();
         const [module, f] = jsLink.split('.');
         ssrsx.events.push({target, event, module, f: f ?? key});
         needUid = true;
-
-
-
+        //
       }else{
         // inline js
         result.push(`${key}="${String(attribute)}"`);
       }
-      /*
-      if(String(attribute).indexOf('javascript:') === 0){
-        // inline js
-        const js = String(attribute).slice(11);
-
-
-        result.push(`${key}="${js}"`);
-      }else if(String(attribute).indexOf('js:') === 0){
-        // inline js
-        const js = String(attribute).slice(3);
-
-
-        result.push(`${key}="${js}"`);
-      }else{
-        const target = uid;
-        const event = key.slice(2).toLowerCase();
-        const [module, f] = String(attribute).split('.');
-        ssrsx.events.push({target, event, module, f: f ?? key});
-        needUid = true;
-      }
-      */
       continue;
     }
     //
@@ -143,22 +107,23 @@ interface ElementEvent {
   f: string,
 }
 
-interface GlobalParseContext {
+interface GlobalContext {
   redirect?: boolean;
+  lastModified?: Date;
+  head?: VirtualChildren;
 }
 
 interface SsrsxContext<C = unknown> {
   baseUrl: string;
   context?: C;
   parseContext: {
-    global: GlobalParseContext;
+    global: GlobalContext,
     [key: string]: unknown
   };
   server: HttpServer;
   //
   styles: string[];
   events: ElementEvent[];
-  //
 }
 
 interface SsrsxFunctions {
@@ -198,7 +163,7 @@ const parseCore = async (root: VirtualChildren, ssrsx: SsrsxContext): Promise<st
     try{
       funcResult = await ve.f({_ssrsxFunctions, ...ve.props});
     }catch(e){
-      console.error(e); // TODO error report
+      logError('Functions component error :', e);
     }
     const result = await parseCore(funcResult, ssrsx);
     //
@@ -240,5 +205,5 @@ const parse = async (root: JSX.Children, httpServer: HttpServer, userContext: un
 ////////////////////////////////////////////////////////////////////////////////
 
 export { Fragment, parse };
-export type { SsrsxContext, SsrsxFunctions, GlobalParseContext, ElementEvent };
+export type { SsrsxContext, SsrsxFunctions, ElementEvent, GlobalContext };
 export { getCurrentSsrsx };

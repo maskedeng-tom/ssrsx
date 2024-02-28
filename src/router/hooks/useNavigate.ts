@@ -1,4 +1,4 @@
-import { GlobalParseContext, getCurrentSsrsx } from 'jsx/jsx-parser';
+import { GlobalContext, getCurrentSsrsx } from 'jsx/jsx-parser';
 import { getParseContext, getServer } from '../../server/support';
 import { joinPath } from '../lib/joinPath';
 import { isExpressServer, isKoaServer } from '../../types';
@@ -12,7 +12,7 @@ const useNavigate = () => {
   //
   return (to: string) => {
     //
-    const globalContext = getParseContext<GlobalParseContext>('global');
+    const globalContext = getParseContext<GlobalContext>('global');
     const server = getServer();
     //
     const target = joinPath(baseUrl ?? '', to);

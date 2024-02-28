@@ -23,11 +23,14 @@ import {
   useContext,
   useGlobalStyle,
   useScopedStyle,
-} from './src/hooks';
+  useCSSNesting,
+} from './src/hooks/hooks';
+import { useHead } from './src/hooks/useHead';
 import { useNavigate } from './src/router/hooks/useNavigate';
 import { useLocation } from './src/router/hooks/useLocation';
 import { useParams } from './src/router/hooks/useParams';
 import { useSearch } from './src/router/hooks/useSearch';
+import { useLastModified } from './src/router/hooks/useLastModified';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -50,12 +53,15 @@ export {
   useContext,
   useGlobalStyle,
   useScopedStyle,
+  useCSSNesting,
+  useHead,
 };
 export {
   useNavigate,
   useLocation,
   useParams,
   useSearch,
+  useLastModified,
 };
 
 ////////////////////////////////////////////////////////////////////////////////

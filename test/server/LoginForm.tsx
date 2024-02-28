@@ -23,10 +23,10 @@ const LoginForm = () => {
   });
 
   const context = useContext<UserContext>();
-  console.log('=context=>', context);
+  //console.log('=context=>', context);
 
   const location = useLocation();
-  console.log('=location=>', location);
+  //console.log('=location=>', location);
 
   /*
   const koa = useServer<KoaServer>();

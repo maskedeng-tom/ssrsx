@@ -29,7 +29,10 @@ const appendScopeName = (selectorString: string, scopeName?: string) => {
   }
   //
   const selector = selectorString.trim().split(' ');
-  const deep = selector.indexOf('::v-deep');
+  let deep = selector.indexOf('::v-scope');
+  if(deep < 0){
+    deep = selector.indexOf('::v-deep');
+  }
   //
   if (deep === 0) {
     if(selector.length === 1){

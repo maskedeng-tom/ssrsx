@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-import { useSession } from '../../src/hooks';
+import { useSession } from '../../';
 
 ////////////////////////////////////////////////////////////////////////////////
 

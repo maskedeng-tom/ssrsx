@@ -1,5 +1,5 @@
 import { isKoaServer, isExpressServer, ExpressServer, KoaServer } from '../types';
-import { getCurrentSsrsx } from '../../jsx/jsx-parser';
+import { getCurrentSsrsx } from 'jsx/jsx-parser';
 import { HttpServer } from '../types';
 
 ////////////////////////////////////////////////////////////////////////////////

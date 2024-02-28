@@ -1,9 +1,10 @@
 import { getCurrentSsrsx } from 'jsx/jsx-parser';
-import { getBody, getContext, getHttpServer, getServer, getSession } from './server/support';
+import { getBody, getContext, getHttpServer, getServer, getSession } from '../server/support';
 import { SassStyles } from './styleToString/cssTypes';
-import { KoaServer, ExpressServer } from './types';
+import { KoaServer, ExpressServer } from '../types';
 import { styleToString } from './styleToString/styleToString';
-import { shortId } from './lib/shortId';
+import { shortId } from '../lib/shortId';
+import { nestedStyleToString } from './styleToString/nested';
 
 ////////////////////////////////////////////////////////////////////////////////
 // http server
@@ -51,7 +52,14 @@ const useScopedStyle = (style: SassStyles) => {
   return {'data-ssrsx-css': scope};
 };
 
+const useCSSNesting = (style: SassStyles) => {
+  const scope = shortId('sc');
+  const ssrsx = getCurrentSsrsx();
+  ssrsx?.styles.push(nestedStyleToString(style, `data-ssrsx-css="${scope}"`));
+  return {'data-ssrsx-css': scope};
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 
 export { useServer, useBody, useSession, useContext };
-export { useGlobalStyle, useScopedStyle };
+export { useGlobalStyle, useScopedStyle, useCSSNesting };

@@ -3,16 +3,16 @@ declare namespace JSX {
   //////////////////////////////////////////////////////////////////////////////
 
   // virtual element
-  type Element = import('./jsx/jsx-runtime').VirtualElement;
+  type Element = import('jsx/jsx-runtime').VirtualElement;
 
   // style props
   type CssProps = import('./src/styleToString/cssTypes').CssProps;
 
   // child nodes
-  type Children = import('./jsx/jsx-runtime').VirtualChildren;
+  type Children = import('jsx/jsx-runtime').VirtualChildren;
 
   // ext contexts
-  type SsrsxContext = import('./jsx/jsx-parser').SsrsxContext;
+  type SsrsxContext = import('jsx/jsx-parser').SsrsxContext;
 
   //////////////////////////////////////////////////////////////////////////////
 

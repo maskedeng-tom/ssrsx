@@ -1,5 +1,5 @@
 import { URL } from 'url';
-import { getCurrentSsrsx } from '../../../jsx/jsx-parser';
+import { getCurrentSsrsx } from 'jsx/jsx-parser';
 import { getServer, getProtocol, getHostname, getPort, getUrl } from '../../server/support';
 import { joinPath } from '../lib/joinPath';
 

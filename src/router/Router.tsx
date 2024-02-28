@@ -1,6 +1,6 @@
-import { VirtualChildren } from '../../jsx/jsx-runtime';
+import { VirtualChildren } from 'jsx/jsx-runtime';
 import { getParseContext } from '../server/support';
-import { getCurrentSsrsx } from '../../jsx/jsx-parser';
+import { getCurrentSsrsx } from 'jsx/jsx-parser';
 import { addFirstSlash, addLastSlash } from './lib/addSlash';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -12,6 +12,8 @@ interface RouterContext {
   routes?: {
     resolved?: boolean;
   };
+  //redirect?: boolean;
+  //lastModified?: Date;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

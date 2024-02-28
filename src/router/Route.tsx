@@ -1,6 +1,6 @@
-import { VirtualChildren } from '../../jsx/jsx-runtime';
+import { VirtualChildren } from 'jsx/jsx-runtime';
 import { getParseContext, getServer } from '../server/support';
-import { SsrsxFunctions } from '../../jsx/jsx-parser';
+import { SsrsxFunctions } from 'jsx/jsx-parser';
 import { joinPath } from './lib/joinPath';
 import { matchPath } from './lib/matchPath';
 import { removeFirstSlash } from './lib/addSlash';
@@ -25,19 +25,12 @@ const Route = ({
     return <></>;
   }
 
-  let targetPath = path;
-
   // all
-  if(targetPath === '*'){
+  if(path === '*'){
     if(parseContext.routes){
       parseContext.routes.resolved = true;
     }
     return <>{children ?? element}</>;
-  }
-
-  // ?????/*
-  if(targetPath.slice(-2) === '/*'){
-    targetPath = `${targetPath.slice(0, -2)}/(.*)`;
   }
 
   // get url
@@ -47,7 +40,7 @@ const Route = ({
   const base = parseContext.matched;
 
   // test match
-  const match = matchPath(removeFirstSlash(targetPath), url.slice(base.length), {sensitive: sensitive ?? false});
+  const match = matchPath(removeFirstSlash(path), url.slice(base.length), {sensitive: sensitive ?? false});
   if(!match.match && !match.subMatch){
     return <></>;
   }

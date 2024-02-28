@@ -1,9 +1,7 @@
 import fs from 'fs';
-import debug from 'debug';
-const log = debug('ssrsx');
-const logError = debug('ssrsx:error');
 import path from 'path';
 import childProcess from 'child_process';
+import { log, logError } from '../lib/log';
 import { TscOption } from '../core';
 import { errorConsole } from '../lib/errorConsole';
 

@@ -1,7 +1,7 @@
-import { jsx, VirtualChildren } from '../../jsx/jsx-runtime';
+import { jsx, VirtualChildren } from 'jsx/jsx-runtime';
 import { useLocation } from './hooks/useLocation';
 import { joinPath } from './lib/joinPath';
-import { getCurrentSsrsx } from '../../jsx/jsx-parser';
+import { getCurrentSsrsx } from 'jsx/jsx-parser';
 import { useHref } from './hooks/useHref';
 
 ////////////////////////////////////////////////////////////////////////////////

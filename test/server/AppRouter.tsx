@@ -1,4 +1,4 @@
-import { useGlobalStyle } from '../../index';
+import { useGlobalStyle, useHead, useCSSNesting } from '../../index';
 import { Router, Routes, Route } from '../../index';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -19,6 +19,38 @@ interface UserContext {
 
 const AppRouter = () => {
   //
+  useCSSNesting({
+    html:{
+      width: '100%',
+      height: '100%',
+    },
+    body:{
+      width: '100%',
+      height: '100%',
+      backgroundColor: '#f0f0f0',
+      boxSizing: 'border-box',
+      margin: 0,
+      padding: 0,
+      '*' : {
+        boxSizing: 'border-box',
+        margin: 0,
+        padding: 0,
+      }
+    },
+    '.container': {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+      height: '100%',
+      '.inner': {
+        width: 'auto',
+        padding: 20,
+        backgroundColor: '#ffffff',
+      },
+    },
+  });
+  /*
   useGlobalStyle({
     html:{
       width: '100%',
@@ -50,6 +82,11 @@ const AppRouter = () => {
       },
     },
   });
+  */
+  useHead(<>
+    <title>AppRouter</title>
+    <meta name="description" content="AppRouter"/>
+  </>);
   //
   return <>
     <Router>
@@ -57,7 +94,6 @@ const AppRouter = () => {
         <head>
           <meta charset="utf-8"/>
           <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-          <title></title>
         </head>
         <body>
           <div className="container">
@@ -88,6 +124,10 @@ const AppRouter = () => {
 
                 <Route path="sub">
                   <Sub/>
+                </Route>
+
+                <Route path="/(.*)">
+                  <FreeEx/>
                 </Route>
 
                 <Route path="*">

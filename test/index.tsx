@@ -191,7 +191,6 @@ const startServerKoa = () => {
       'jquery': 'jquery.min',
     },
     context: (ctx, next): UserContext => {
-      console.log('=KOA=>', ctx, next);
       return {
         db: 'DB',
       };

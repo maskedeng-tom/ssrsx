@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
 **/
-import { styleToString } from '../src/styleToString/styleToString';
+import { styleToString } from '../src/hooks/styleToString/styleToString';
 
 describe('styleToString', () => {
   test('basic', () => {
